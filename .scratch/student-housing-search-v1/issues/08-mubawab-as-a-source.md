@@ -6,7 +6,7 @@ Mubawab's terms of use are read as part of ticket 11. If they forbid this collec
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent — stopped on 2026-10-05 before any code: waiting for the owner's decision on Mubawab's terms of use (see Comments)
+**Status:** ready-for-human — stopped on 2026-10-05 before any code: waiting for the owner's decision on Mubawab's terms of use (see Comments)
 
 - [ ] A collection run includes Mubawab listings for Grand Tunis through the same source interface as Facebook
 - [ ] Each stored listing carries the link to its Mubawab page, its post date, and the facts read from the page
@@ -34,3 +34,7 @@ Mubawab's terms of use are read as part of ticket 11. If they forbid this collec
 - If the owner says go ahead, the ticket restarts from its second step: check the colon rule on a real search address, save sample pages, write down the page structure, design the seam for a source that already knows its facts (today every post goes through the model), then the adapter. None of that exists yet, for Tayara either.
 - The site footer still says listings come from public Facebook groups. That is true as things stand, so it was left alone.
 - This reading also answers the second criterion of ticket 11, ticked there. The spec's open point on the two sites' terms is updated.
+
+### 2026-10-05 — fixes after the two-axis code review
+
+- The status says `ready-for-human`: the ticket waits for the owner's decision, not for an agent. The reason is unchanged.

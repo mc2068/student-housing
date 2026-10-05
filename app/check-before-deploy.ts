@@ -1,9 +1,9 @@
 // Run by `npm run deploy` between building the site and sending it to Cloudflare (docs/deploy.md).
-// The build copies every value of this folder's .env files (.env, .env.local, .env.production…) into the
+// The build copies every value of the project's .env files (.env, .env.local, .env.production…) into the
 // site it sends. The report address is meant to travel that way; a key is not. This stops the deploy when
 // the built site carries anything but the address, or no usable address. It prints names, never values.
-import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { hostedDatabaseId } from "../db/wrangler-config";
 
 const stop = (reason: string): never => {
   console.error(`Not deployed: ${reason}`);
@@ -27,8 +27,10 @@ if (!email || email.endsWith("@example.com")) {
   stop("put the real address that receives reports in .env.local, as REPORT_EMAIL.");
 }
 
-if (readFileSync("wrangler.jsonc", "utf8").includes("00000000-0000-0000-0000-000000000000")) {
-  stop("wrangler.jsonc does not have the hosted database's identifier yet (docs/deploy.md, step 4).");
+try {
+  hostedDatabaseId();
+} catch (err) {
+  stop(err instanceof Error ? err.message : String(err));
 }
 
 console.log("Checked: the built site carries the report address and no key.");

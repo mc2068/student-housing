@@ -297,7 +297,7 @@ describe("collection run", () => {
 
     const first = await collect([source("fb-a", posts)], broken);
     expect(first["fb-a"]).toMatchObject({ listings: 0, unreadable: 1, extractionError: "quota spent" });
-    expect(failures(first)).toEqual(["fb-a: no model could read a batch of its posts (quota spent)"]);
+    expect(failures(first)).toEqual(["fb-a: no model could read 1 of its posts (quota spent)"]);
     expect(await listings(db)).toEqual([]);
 
     const second = await collect([source("fb-a", posts)], fakeModel({ "studio manar": OFFER }).extractor);
@@ -317,6 +317,38 @@ describe("collection run", () => {
 
     expect(report["fb-a"]).toMatchObject({ listings: 1, notHousing: 0, unreadable: 1 });
     expect(await db.all("SELECT url FROM collected_posts")).toEqual([{ url: post(1, "").url }]);
+    // The rest of its batch was read and stored, and the run still ends as failed: the post is paid for and lost.
+    expect(failures(report)).toEqual([expect.stringMatching(/^fb-a: no model could read 1 of its posts \(.+\)$/)]);
+  });
+
+  it("asks once more, without the wait for overloaded models, for a post a model left out of its answer", async () => {
+    const { db, store } = await setup();
+    const answers: Record<string, object> = { "studio manar": OFFER };
+    const model = fakeModel(answers);
+    const leavesOneOutAtFirst: Extractor = {
+      name: "leaves one out at first",
+      extract: async (texts) => {
+        const extractions = await model.extractor.extract(texts);
+        answers["S+1 bardo"] = { ...OFFER, kind: "rental", neighbourhood: "le-bardo" };
+        return extractions;
+      },
+    };
+    const lastResort = spyExtractor();
+
+    // The wait is left at its five minutes: taken here, it would outlast the test.
+    const report = await runCollection({
+      sources: [source("fb-a", [post(1, "studio manar"), post(2, "S+1 bardo")])],
+      extractor: leavesOneOutAtFirst,
+      lastResort: lastResort.extractor,
+      store,
+      now: NOW,
+      pauseMs: 0,
+    });
+
+    expect(await listings(db)).toMatchObject([{ kind: "flatshare" }, { kind: "rental" }]);
+    expect(report["fb-a"]).toMatchObject({ listings: 2, unreadable: 0, byLastResort: 0 });
+    expect(failures(report)).toEqual([]);
+    expect(lastResort.received).toEqual([]);
   });
 
   it("reads a model answer given as a bare list", async () => {
@@ -346,14 +378,44 @@ describe("collection run", () => {
     expect(failures(report)).toEqual(["tayara: its posts could not be collected (site unreachable)"]);
   });
 
-  it("names no failure when every source was collected and every batch read", async () => {
+  it("names the source of each post left unread, and how many, when the models read the rest", async () => {
+    const { db, collect } = await setup();
+    // The model answers for one post at the second try only, and never for one post of each source.
+    const answers: Record<string, object> = { "studio manar": OFFER, "je cherche": DEMAND };
+    const model = fakeModel(answers);
+    const leavesSomeOut: Extractor = {
+      name: "leaves some out",
+      extract: async (texts) => {
+        const extractions = await model.extractor.extract(texts);
+        answers["S+1 bardo"] = OFFER;
+        return extractions;
+      },
+    };
+
+    const report = await collect(
+      [
+        source("fb-a", [post(1, "studio manar"), post(2, "S+1 bardo"), post(3, "texte illisible")]),
+        source("fb-b", [post(4, "autre texte illisible"), post(5, "je cherche")]),
+      ],
+      leavesSomeOut,
+    );
+
+    expect(await listings(db)).toHaveLength(2);
+    expect(report["fb-a"]).toMatchObject({ listings: 2, unreadable: 1 });
+    expect(report["fb-b"]).toMatchObject({ demands: 1, unreadable: 1 });
+    expect(failures(report)).toEqual([
+      "fb-a: no model could read 1 of its posts (left out of a model's answer, or garbled in it)",
+      "fb-b: no model could read 1 of its posts (left out of a model's answer, or garbled in it)",
+    ]);
+  });
+
+  it("names no failure when every source was collected and every post read", async () => {
     const { collect } = await setup();
-    // The second post is skipped by the model: it is left for the next run, which is not a failure.
-    const { extractor } = fakeModel({ "studio manar": OFFER });
+    const { extractor } = fakeModel({ "studio manar": OFFER, "je cherche": DEMAND, "S+1 nulle part": { ...OFFER, neighbourhood: null } });
 
-    const report = await collect([source("fb-a", [post(1, "studio manar"), post(2, "texte illisible")])], extractor);
+    const report = await collect([source("fb-a", [post(1, "studio manar"), post(2, "je cherche"), post(3, "S+1 nulle part")])], extractor);
 
-    expect(report["fb-a"]).toMatchObject({ listings: 1, unreadable: 1 });
+    expect(report["fb-a"]).toMatchObject({ listings: 1, demands: 1, noNeighbourhood: 1, unreadable: 0 });
     expect(failures(report)).toEqual([]);
   });
 

@@ -23,7 +23,7 @@ The last four act on the site owner's Cloudflare account and need `npx wrangler 
 
 Two files hold what must stay out of the repository; [.env.example](.env.example) lists both. `.env.local` holds the address that receives reports and nothing else, because the website's build copies it into the site it sends; the results page fails without `REPORT_EMAIL`. `.env.collect` holds the keys of the collection run. The daily run on GitHub (`.github/workflows/collect.yml`) reads its keys from the repository's secrets.
 
-The evaluation set is `proof/evaluation-set.json`. It holds real post texts, so it stays on the site owner's machine and is never committed ([ADR 0002](docs/adr/0002-store-facts-and-link-only.md)); `npm run evaluate` writes its report and a page to review the expected facts next to it.
+The evaluation set is `proof/evaluation-set.json`. It holds real post texts, so it stays on the site owner's machine and is never committed ([ADR 0002](docs/adr/0002-store-facts-and-link-only.md)); `npm run evaluate` writes its scores (`proof/evaluation-scores.txt`) and a page to review the expected facts next to it.
 
 ## Site owner tasks
 

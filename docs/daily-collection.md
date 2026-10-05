@@ -87,7 +87,7 @@ A run by hand takes 2 posts from each group unless you choose another number, be
 | `demands` | Posts by people looking for housing. |
 | `notHousing` | Posts about something else. |
 | `noNeighbourhood` | Offers naming no neighbourhood of the list: dropped. |
-| `unreadable` | No model could read them. They are tried again if they are still among the group's newest tomorrow. |
+| `unreadable` | No model could read them, at either of the run's two tries. The run ends as failed. They are tried again if they are still among the group's newest tomorrow. |
 | `byLastResort` | Among the posts read, those a smaller model read because the usual ones were down twice. Their facts are less sure. |
 
 Then the number of listings the hosted database holds.
@@ -96,7 +96,8 @@ Then the number of listings the hosted database holds.
 
 GitHub marks the run with a red cross and, unless you turned that off in your notification settings, sends you an email. A run fails when:
 
-- **A group could not be collected, or no model could read some posts.** The other groups and posts were still done. The run's page shows a red line that names the group, for example `fb-ariana-bawsla: its posts could not be collected (…)`. One such day is nothing to act on. Several in a row for the same group: tell the maintainer; the group may have closed or the scraper changed.
+- **A group could not be collected, or no model could read some posts.** The other groups and posts were still done. The run's page shows a red line that names the group, for example `fb-ariana-bawsla: its posts could not be collected (…)` or `fb-ariana-bawsla: no model could read 2 of its posts (…)`. Even one unread post makes the run fail: it was paid for, and in a busy group it is no longer among the newest the next day. One such day is nothing to act on. Several in a row for the same group: tell the maintainer; the group may have closed or the scraper changed.
+- **`was still RUNNING after 5 minutes`, or `aborted due to timeout`.** A service took too long and the run stopped waiting for it: the scraper for one group (its posts are lost for the day, and still billed if the scraper finished later), a model (the next model was asked), or the database. Treat it like the line above.
 - **An `Apify …` error on every group.** Most likely the month's free scraping credit is spent, or the token was withdrawn. Check <https://console.apify.com/billing>. With no payment card on the account nothing is charged; runs work again when the month's credit is renewed.
 - **`Gemini 429` on every batch.** The day's free model quota is spent, usually by runs by hand or an evaluation the same day. Tomorrow's run works again.
 - **`Gemini 503` on every batch.** Google's free models were overloaded, the smaller ones included. Nothing to do; if it happens most days, tell the maintainer: the hour of the run can be moved.
@@ -114,13 +115,21 @@ Everything stays inside the free allowances, with these sums.
 - **Posts paid for twice.** A run takes each group's newest posts whether or not it has seen them. A group that posted fewer than 6 times since the last run returns some posts again; they cost $0.005 each and are not read again. In the posts saved on 2026-10-04 this was 4 posts of 30, all from one group. The scraper can filter by date, but that adds $0.002 to every post, which costs more as long as fewer than 2 posts in 7 are repeats. The `alreadySeen` column shows the real figure every day.
 - **Models (Gemini).** A run reads at most 30 new posts, 10 per request: 3 requests a day, of the 20 a day each of the three usual models allows for free.
 - **Database (Cloudflare D1).** About 70 requests and 100 rows written a run, against 100,000 rows a day.
-- **GitHub.** A run takes a few minutes of the 2,000 a month a private repository gets for free. A public repository is not counted.
+- **GitHub.** A run takes a few minutes of the 2,000 a month a private repository gets for free. A public repository is not counted. None of this was measured on GitHub; the sum below is from the waits written in the code.
+
+  | Day | Time |
+  | --- | --- |
+  | Ordinary: five scraper runs, three model requests, about 70 database requests | A few minutes |
+  | Every model refuses, and answers its refusal at once: 72 requests with 13 minutes of waits between them (20 seconds of retries per model and batch, five minutes before the second try) | About 25 minutes |
+  | The same, with every scraper run also slow to its limit of five minutes | About 45 minutes |
+  | Anything slower: GitHub stops the job, and its log has no counts | 60 minutes |
 
 ## Good to know
 
 - **Private or public repository.** Nothing in the repository is secret, so either is safe. In a public repository GitHub switches a schedule off after 60 days without any change to the repository, and writes to you first: **Actions** > **Daily collection** > **Enable workflow** switches it back on. A private repository has no such rule.
 - **The time of day.** 05:17 UTC, in `.github/workflows/collect.yml`. GitHub may start a few minutes late. On 2026-10-05 around 17:00, Tunis time, all three usual models refused as overloaded for more than ten minutes. The early morning was chosen in the hope that it is calmer; that is not measured.
 - **When every usual model is down**, a run waits five minutes and tries the unread posts once more. Only if they fail again does it hand them to two smaller models, which get more facts wrong (ticket 02). The `byLastResort` column counts those posts.
+- **When a model answers for a batch but leaves a post out**, or answers nonsense for it, the run asks once more for that post, without the five-minute wait. If it is still unread, it is counted as `unreadable` and the run ends as failed.
 - **Your own runs still work.** `npm run collect` on your machine writes to the local database, as before, and spends the same Apify credit and Gemini quota.
 - **`npm run hosted:fill` is no longer needed** once the daily run works. It stays safe to run: it never changes a line the hosted database already has.
 - **To stop the daily run:** **Actions** > **Daily collection** > **…** > **Disable workflow**.

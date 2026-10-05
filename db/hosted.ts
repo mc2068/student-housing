@@ -7,11 +7,13 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { LOCAL_DATABASE, openSqlite, type SqlValue } from "./db";
-import { fileOnD1, HOSTED, onD1, PREVIEW } from "./wrangler";
+import { LOCAL_DATABASE, openSqlite, schemaTables, type SqlValue } from "./db";
+import { readD1Target } from "./target";
+import { runFile, runStatement } from "./wrangler";
 
-// Listings, the posts already read (so that they are not read again) and the owner's hidden listings.
-const TABLES = ["listings", "collected_posts", "hidden_listings"];
+// Every table of the schema: listings, the posts already read (so that they are not read again) and the
+// owner's hidden listings.
+const TABLES = schemaTables();
 
 const literal = (value: SqlValue) =>
   value === null ? "NULL" : typeof value === "number" ? String(value) : `'${value.replaceAll("'", "''")}'`;
@@ -31,19 +33,20 @@ async function localRows(): Promise<string[]> {
   return statements;
 }
 
-const [command, ...flags] = process.argv.slice(2);
-const where = flags.includes("--preview") ? PREVIEW : HOSTED;
+// The hosted database, unless told to act on the preview copy.
+const { target = "hosted", rest } = readD1Target(process.argv.slice(2));
+const [command] = rest;
 
 if (command === "schema") {
   // The same file the local database is created from, so the two cannot drift apart.
-  fileOnD1(where, fileURLToPath(new URL("./schema.sql", import.meta.url)));
+  runFile(target, fileURLToPath(new URL("./schema.sql", import.meta.url)));
 } else if (command === "fill") {
   const statements = await localRows();
   const folder = mkdtempSync(join(tmpdir(), "student-housing-"));
   try {
     const file = join(folder, "rows.sql");
     writeFileSync(file, statements.join("\n"));
-    if (statements.length > 0) fileOnD1(where, file);
+    if (statements.length > 0) runFile(target, file);
   } finally {
     rmSync(folder, { recursive: true });
   }
@@ -51,5 +54,5 @@ if (command === "schema") {
   throw new Error("Usage: tsx db/hosted.ts schema|fill [--preview]");
 }
 
-console.log(where === HOSTED ? "The hosted database now holds:" : "The preview copy on this machine now holds:");
-console.table(onD1(where, `SELECT ${TABLES.map((table) => `(SELECT COUNT(*) FROM ${table}) AS ${table}`).join(", ")}`));
+console.log(target === "hosted" ? "The hosted database now holds:" : "The preview copy on this machine now holds:");
+console.table(runStatement(target, `SELECT ${TABLES.map((table) => `(SELECT COUNT(*) FROM ${table}) AS ${table}`).join(", ")}`));

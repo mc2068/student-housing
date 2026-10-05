@@ -6,7 +6,7 @@ import { createStore } from "../collection/store";
 import { searchListings } from "../search/search";
 import { type D1Binding, openD1 } from "./d1";
 import { openD1OverHttp } from "./d1-http";
-import { type Db, openSqlite } from "./db";
+import { type Db, openSqlite, schemaTables } from "./db";
 
 const NOW = new Date("2026-10-05T12:00:00.000Z");
 const FACULTIES: Faculty[] = [{ id: "fst", name: "fst", short: "fst", campus: "", neighbourhoods: ["el-manar", "el-omrane"] }];
@@ -52,7 +52,7 @@ describe("the D1 database", () => {
   // Each test fills the one database from nothing.
   afterEach(async () => {
     vi.unstubAllGlobals();
-    for (const table of ["listings", "collected_posts", "hidden_listings"]) await d1.prepare(`DROP TABLE IF EXISTS ${table}`).run();
+    for (const table of schemaTables()) await d1.prepare(`DROP TABLE IF EXISTS ${table}`).run();
   });
 
   it("stores and finds listings exactly as local SQLite does", async () => {
@@ -61,6 +61,22 @@ describe("the D1 database", () => {
     expect(onD1.all.map((l) => l.url)).toEqual([url(6), url(2), url(3)]);
     expect(onD1.all[0]?.price).toBe(400);
     expect(onD1).toEqual(await fillAndSearch(openSqlite(":memory:")));
+  });
+
+  // D1 refuses a statement that binds more than 100 values; local SQLite takes thousands and would not show it.
+  it("recognises the posts already read and the hidden ones among more links than one statement may bind", async () => {
+    const db = openD1(d1);
+    const store = await createStore(db);
+    const read = (n: number) =>
+      store.record({ url: url(n), sourceId: "fb-a", text: `post ${n}`, postedAt: "2026-10-05T10:00:00.000Z" }, { offer: false, reason: "demand" }, NOW);
+    await read(1);
+    await read(100);
+    await read(250);
+    await db.run("INSERT INTO hidden_listings (url) VALUES (?)", url(101));
+    const urls = Array.from({ length: 250 }, (_, i) => url(i + 1));
+
+    expect([...(await store.seen(urls))]).toEqual([url(1), url(100), url(250)]);
+    expect([...(await store.hidden(urls))]).toEqual([url(101)]);
   });
 
   // The daily collection run reaches the hosted database from outside Cloudflare (db/d1-http.ts). Cloudflare's
@@ -72,7 +88,7 @@ describe("the D1 database", () => {
       return Response.json({ errors: [], messages: [], result: [answer], success: true });
     });
 
-    const overHttp = await fillAndSearch(openD1OverHttp({ accountId: "account", databaseId: "database", apiToken: "token", retryWaitsMs: [] }));
+    const overHttp = await fillAndSearch(openD1OverHttp({ accountId: "account", databaseId: "database", apiToken: "token" }, { retryWaitsMs: [] }));
 
     expect(overHttp.all.map((l) => l.url)).toEqual([url(6), url(2), url(3)]);
     expect(overHttp).toEqual(await fillAndSearch(openSqlite(":memory:")));

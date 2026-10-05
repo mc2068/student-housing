@@ -67,3 +67,37 @@ The neighbourhood is scored on posts both sides call an offer; the other facts o
 - The owner's confirmation (above).
 - The prompt was not changed here, as agreed. What the first run suggests for whoever changes it next: a rule for lets by the day or night, a rule for two prices in one post, and an example of an offer written as "looking for someone to share". No ticket covers this yet.
 - Whether a batch should ever reach the lite models, given how they did here, is a question for the daily collection (ticket 10) once the scores are confirmed.
+
+### 2026-10-05 — fixes after the two-axis code review
+
+The review covered tickets 02, 09 and 10 together. The scores do not change: the 50 saved answers scored again give the same figures, and the review page is the same to the byte.
+
+**What changed for the owner**
+
+- **The output names the model that read each post**, as the spec says it does. It used to give a count per model, and the model only for the posts that differ. It now lists the posts of each model:
+
+  ```
+  Read by:
+    gemini:gemini-3.5-flash-lite: 10 posts (#1 to #10)
+    gemini:gemini-3.8-flash: 30 posts (#11 to #30, #41 to #50)
+    gemini:gemini-3.6-flash: 10 posts (#31 to #40)
+  ```
+
+  This was the more useful way to make the two agree: the finding above, that six of the seven differing posts are among the lite model's ten, can now be read off the output.
+- **The saved text is `proof/evaluation-scores.txt`**, no longer `proof/evaluation-report.txt`. In this project a report is the email about a listing (`CONTEXT.md`), so the scores are called scores, in the code and in the README. The old file in the main checkout is left over from the first run and can be deleted; the next `npm run evaluate -- --keep-answers` writes the new one.
+
+**What changed in the code**
+
+- The one file of 327 lines is four, one per reason to change, in `collection/extract/evaluation/`: reading and checking the set (`set.ts`), scoring (`score.ts`), the scores as text (`scores-text.ts`), the review page (`review-page.ts`). The command stays at `collection/extract/evaluate.ts`.
+- The batch size, the pause and the shortening of an error message are taken from the collection run, which had them first.
+- Names: a tally counts `right` out of `total`; the wrapper that remembers which model answered says so.
+
+**Left as it is, and why**
+
+- **The keys of the set file**: `n`, `gender`, `neighbourhood`, where the code elsewhere says `genderRestriction` and `neighbourhoodId`. The set is the owner's working file and is under review now; renaming its keys in the middle of that is not worth it. The review asked for `n` to be renamed in the code; it is the same key of the same file, read as it is written, so it stays for the same reason.
+- **`--keep-answers` and the review page.** Not in the criteria, but they are how the third criterion gets met: the owner reads the page, corrects the file, and scores again at no model cost.
+
+**How it was checked**
+
+- 20 tests of the reading, the scoring, the text and the page pass, on made-up posts.
+- `--keep-answers` on a copy of the set and its 50 saved answers, with no key in the environment so that no model could be called: the same scores as the first run, line for line apart from "Read by"; the review page identical.

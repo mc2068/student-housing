@@ -29,9 +29,12 @@ jobs:
   collect:
     name: Collection run
     runs-on: ubuntu-latest
-    # A run takes a few minutes, and about twenty when the models are overloaded and it waits to try
-    # them again. This stops one that hangs on a source.
-    timeout-minutes: 40
+    # A run takes a few minutes, and about twenty-five when every model refuses and it waits to try them
+    # again. Every outside request has a time limit of its own, so a stuck source or model fails by name
+    # and the run goes on. With every scraper run slow to its five minutes and every model refusing, that
+    # is about 45 minutes (docs/daily-collection.md has the sum). This limit is for a day slower still:
+    # a job it stops prints no counts, so it is set well above.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
 
@@ -43,7 +46,8 @@ jobs:
       - run: npm ci
 
       # A scheduled run has no choice of posts and takes each group's daily share (collection/credit.ts).
-      # The step ends as failed when a source or a batch failed, after doing all the others.
+      # The step ends as failed when a source could not be collected or a post could not be read, after
+      # doing all the others.
       - name: Collect, read and store
         env:
           POSTS: ${{ inputs.posts }}

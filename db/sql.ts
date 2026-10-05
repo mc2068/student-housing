@@ -2,12 +2,11 @@
 //   npm run sql -- "SELECT url, hidden_at FROM hidden_listings"           on the local database
 //   npm run hosted:sql -- "SELECT url, hidden_at FROM hidden_listings"    on the hosted database, the live site's
 import { applySchema, LOCAL_DATABASE, openSqlite } from "./db";
-import { HOSTED, onD1, PREVIEW } from "./wrangler";
+import { readD1Target } from "./target";
+import { runStatement } from "./wrangler";
 
-const FLAGS = ["--hosted", "--preview"];
-const args = process.argv.slice(2).filter((arg) => !FLAGS.includes(arg));
 // `npm run hosted:sql -- --preview "…"` acts on the copy `npm run preview` reads on this machine.
-const d1 = process.argv.includes("--preview") ? PREVIEW : process.argv.includes("--hosted") ? HOSTED : undefined;
+const { target, rest: args } = readD1Target(process.argv.slice(2));
 
 const statement = args[0]?.trim().replace(/;$/, "");
 // Only the first of several statements would run locally, without a word about the rest; the hosted
@@ -17,8 +16,8 @@ if (!statement || args.length > 1 || statement.includes(";")) {
 }
 
 let rows: Record<string, unknown>[];
-if (d1) {
-  rows = onD1(d1, statement);
+if (target) {
+  rows = runStatement(target, statement);
 } else {
   const db = openSqlite(LOCAL_DATABASE);
   // A database last written before a table was added gets it here.

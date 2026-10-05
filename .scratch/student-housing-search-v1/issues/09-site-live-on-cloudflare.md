@@ -6,7 +6,7 @@ The site owner creates the GitHub repository and connects the Cloudflare account
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent (everything that needs no account is built and proven on this machine; the four unticked criteria wait on the owner's steps in `docs/deploy.md`)
+**Status:** ready-for-human (everything that needs no account is built and proven on this machine; the five unticked criteria wait on the owner's steps in `docs/deploy.md`)
 
 - [ ] The hosted database has the same schema as the local one, created by a repeatable step — *the step is written and proven on a local copy; waits on owner steps 2 to 5*
 - [ ] The site is deployed and reachable at a public address — *waits on owner step 7*
@@ -93,3 +93,32 @@ Read on 2026-10-05 from Cloudflare's own pages.
 - Ticket 10: the collection run writing to the hosted database. What it needs to know (how to reach D1 from GitHub Actions, the token and its permissions, the 100-parameter limit) is in the shared notes, `09-hosted-database.md`.
 - Ticket 11: the processor-time check above, once the site is live.
 - `next dev` in this version of Next.js adds a block of advice for coding agents to `CLAUDE.md` every time it starts. It was not committed. The owner can keep reverting it or turn it off with `agentRules: false` in `next.config.ts`.
+
+### 2026-10-05 — fixes after the two-axis code review
+
+The review covered tickets 02, 09 and 10 together. Nothing the owner types has changed: every command in `docs/deploy.md` and `docs/hide-a-listing.md` is the same.
+
+**What changed**
+
+- **The status says `ready-for-human`.** Everything left is the owner's. It also said four criteria were unticked; there are five.
+- **The check before a deploy moved** from the top of the project to `app/check-before-deploy.ts`, next to the site it checks. `npm run deploy` names the new place; no document named the old one.
+- **The hosted database's name and identifier are read from `wrangler.jsonc`, in one place** (`db/wrangler-config.ts`). Before, the name was written a second time in the code, and the placeholder identifier was recognised in two places, two different ways, with the same message.
+- **The list of tables is read from `db/schema.sql`** by `npm run hosted:fill` and by the D1 test, which each had their own copy. A table added to the schema is now copied without anyone remembering to add it.
+- **`--hosted` and `--preview` are read in one place** (`db/target.ts`), where three commands each read them their own way. `--preview` still wins when both are given, as `npm run hosted:sql -- --preview "…"` gives them; a test says so.
+- **Plainer names** in the code that calls Cloudflare's tool (`runStatement`, `runFile`, a target that is `hosted` or `preview`).
+- **More than 100 links in one question to D1** is fixed in the collection store; the detail is in ticket 10. The row "Bound parameters per query" of the table above was the warning.
+
+**How it was checked**
+
+- 142 tests pass, type checking passes, `npm run build` passes, and the Cloudflare build passes on this machine.
+- The built site served by wrangler's local mode, with a local database made by the same schema and fill code (run with `--preview`): 79 listings and 168 read posts copied; searches for FST, ISI, ENIT and INSAT returned 15, 18, 15 and 8 listings, the counts recorded above; an unknown address answers 404.
+- The hide-a-listing statements through the SQL command on that local database while the site was served: 15 cards, 14 after the `INSERT`, the `UNIQUE constraint failed` message on a second `INSERT`, 15 again after the `DELETE`; two statements in one command refused.
+- The check before a deploy, run on the built site: it stopped on the placeholder address, as it should here. The identifier check answers its message with the placeholder in place.
+- The server and the processes it leaves behind on Windows were stopped. Nothing was deployed and no `--remote` command was run.
+
+**Kept, though the review noted nobody asked for them**
+
+- `npm run preview` and `--preview`: the only way to see the site as Cloudflare runs it without an account. Both checks above used them.
+- `npm run hosted:fill`: owner step 6. Without it the live site is empty until the first daily run.
+- `public/_headers`: tells browsers to keep the site's stylesheet and scripts, whose names change with their content, so a phone does not fetch them again at every visit.
+- `.env.collect`: what keeps the collection keys out of the site sent to Cloudflare.

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "preview": "tsx db/hosted.ts schema --preview && tsx db/hosted.ts fill --preview && opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && tsx check-before-deploy.ts && opennextjs-cloudflare deploy",
+    "deploy": "opennextjs-cloudflare build && tsx app/check-before-deploy.ts && opennextjs-cloudflare deploy",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "collect": "tsx --env-file=.env.collect collection/run.ts",

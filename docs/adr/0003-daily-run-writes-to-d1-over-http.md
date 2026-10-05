@@ -13,4 +13,5 @@ Cloudflare describes that API as best suited to administrative use, because it f
 ## Consequences
 
 - The HTTP client is tested against the answer shape Cloudflare documents and against a local D1 standing in for Cloudflare's side. It has not met the real service until the owner's first run.
-- More than about 500 posts in one run would need the statements grouped (the API takes a batch); nothing near that is planned.
+- D1 lets one statement bind 100 values. Only one statement binds a value per post: the one that asks which links the database already holds. The store sends it 100 links at a time, so a source may return any number of posts. A local D1 enforces the limit, and a test runs that statement on it with 250 links.
+- A run reading more than about 500 posts within five minutes would meet the account-wide request limit and need its statements grouped (the API takes a batch); nothing near that is planned.

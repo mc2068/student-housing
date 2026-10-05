@@ -5,10 +5,12 @@
 //   npm run collect -- --replay proof/posts.json    posts saved earlier, at no scraping cost
 // `npm run collect:hosted` is what GitHub runs every day (docs/daily-collection.md): the same run into the
 // hosted database, with the keys and CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in the repository's secrets.
-// A run ends as failed when a source could not be collected or a batch could not be read; it still does the rest.
+// A run ends as failed when a source could not be collected or a post could not be read; it still does the rest.
 import { readFileSync } from "node:fs";
 import { openD1OverHttp } from "../db/d1-http";
 import { type Db, LOCAL_DATABASE, openSqlite } from "../db/db";
+import { readD1Target } from "../db/target";
+import { hostedDatabaseId } from "../db/wrangler-config";
 import { failures, runCollection } from "./collect";
 import { dailyPostsPerGroup } from "./credit";
 import { facebookGroups } from "./data";
@@ -51,15 +53,15 @@ function replaySources(file: string): Source[] {
 
 /** The hosted database from outside Cloudflare. Its identifier is not a key: the site's own configuration has it. */
 function hostedDatabase(): Db {
-  const databaseId = /"database_id":\s*"([^"]+)"/.exec(readFileSync(new URL("../wrangler.jsonc", import.meta.url), "utf8"))?.[1];
-  if (!databaseId || /^[0-]+$/.test(databaseId)) {
-    throw new Error("wrangler.jsonc does not have the hosted database's identifier yet (docs/deploy.md, step 4).");
-  }
-  return openD1OverHttp({ accountId: env("CLOUDFLARE_ACCOUNT_ID"), databaseId, apiToken: env("CLOUDFLARE_API_TOKEN") });
+  return openD1OverHttp({ accountId: env("CLOUDFLARE_ACCOUNT_ID"), databaseId: hostedDatabaseId(), apiToken: env("CLOUDFLARE_API_TOKEN") });
 }
 
 const replay = option("replay");
-const hosted = process.argv.includes("--hosted");
+const { target } = readD1Target(process.argv.slice(2));
+if (target === "preview") {
+  throw new Error("A collection run writes to the local database or, with --hosted, to the hosted one. `npm run preview` makes its copy from the local one.");
+}
+const hosted = target === "hosted";
 const maxPosts = postsPerGroup();
 // Every source goes in this one list; the Facebook groups are the only ones for now.
 const sources = replay

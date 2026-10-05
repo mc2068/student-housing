@@ -6,8 +6,13 @@ export interface D1Account {
   databaseId: string;
   /** A Cloudflare API token allowed to edit D1 and nothing else (docs/daily-collection.md). */
   apiToken: string;
-  /** How long to wait before asking again when Cloudflare's servers fail. */
+}
+
+export interface D1Patience {
+  /** How long to wait before asking again when Cloudflare's servers fail; as many more tries as there are waits. */
   retryWaitsMs?: number[];
+  /** How long one request may take; after that it counts as a failure of Cloudflare's servers. */
+  requestLimitMs?: number;
 }
 
 // The answer of D1's query endpoint, as far as this reads it: one entry of `result` per statement.
@@ -25,7 +30,10 @@ type Attempt<T> = { rows: T[] } | { failure: string; askAgain: boolean };
  * One request per statement; Cloudflare allows 1,200 requests in 5 minutes and a run makes well under 100.
  * It imports no database of its own, so it loads wherever `fetch` exists.
  */
-export function openD1OverHttp({ accountId, databaseId, apiToken, retryWaitsMs = [2000, 10000] }: D1Account): Db {
+export function openD1OverHttp(
+  { accountId, databaseId, apiToken }: D1Account,
+  { retryWaitsMs = [2000, 10000], requestLimitMs = 30_000 }: D1Patience = {},
+): Db {
   const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`;
 
   async function attempt<T>(body: string): Promise<Attempt<T>> {
@@ -35,6 +43,7 @@ export function openD1OverHttp({ accountId, databaseId, apiToken, retryWaitsMs =
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiToken}` },
         body,
+        signal: AbortSignal.timeout(requestLimitMs),
       });
     } catch (err) {
       return { failure: `Cloudflare D1 could not be reached: ${err instanceof Error ? err.message : String(err)}`, askAgain: true };

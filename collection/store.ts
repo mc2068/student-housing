@@ -1,4 +1,4 @@
-import { applySchema, type Db, type SqlValue } from "../db/db";
+import { applySchema, type Db, MAX_BOUND_VALUES, type SqlValue } from "../db/db";
 import { type CollectedPost, outcomeOf, type ReadExtraction } from "./domain";
 import { excerpt } from "./redact";
 
@@ -25,14 +25,15 @@ const SAVE_LISTING = `INSERT INTO listings (${LISTING_COLUMNS.join(", ")})
 export async function createStore(db: Db): Promise<Store> {
   await applySchema(db);
 
-  /** Which of these links the table holds. */
+  /** Which of these links the table holds, asked for as many at a time as one statement may bind. */
   async function linksIn(table: "collected_posts" | "hidden_listings", urls: string[]): Promise<Set<string>> {
-    if (urls.length === 0) return new Set();
-    const rows = await db.all<{ url: string }>(
-      `SELECT url FROM ${table} WHERE url IN (${urls.map(() => "?").join(", ")})`,
-      ...urls,
-    );
-    return new Set(rows.map((row) => row.url));
+    const held = new Set<string>();
+    for (let start = 0; start < urls.length; start += MAX_BOUND_VALUES) {
+      const some = urls.slice(start, start + MAX_BOUND_VALUES);
+      const rows = await db.all<{ url: string }>(`SELECT url FROM ${table} WHERE url IN (${some.map(() => "?").join(", ")})`, ...some);
+      for (const row of rows) held.add(row.url);
+    }
+    return held;
   }
 
   return {

@@ -4,10 +4,10 @@
 
 **Blocked by:** 03, 09
 
-**Status:** ready-for-agent (everything that needs no account is built and proven on this machine; the four unticked criteria wait on the owner's steps in `docs/daily-collection.md`, which themselves wait on `docs/deploy.md`)
+**Status:** ready-for-human (everything that needs no account is built and proven on this machine; the four unticked criteria wait on the owner's steps in `docs/daily-collection.md`, which themselves wait on `docs/deploy.md`)
 
 - [ ] Collection runs once a day on a free scheduler and writes to the hosted database — *the schedule and the run are written; neither has run on GitHub or met the real database: waits on owner steps 1 to 7*
-- [x] Only Facebook posts newer than the previous run are fetched, so the monthly scraping credit is not spent on posts already collected — *met differently, as the spec decided after this was written: see "One criterion is met differently"*
+- [x] Only Facebook posts newer than the previous run are fetched, so the monthly scraping credit is not spent on posts already collected — *not met as written: a run fetches each group's newest posts again and pays for the repeats. Met differently, as the spec decided after this was written: see the comment, "One criterion is met differently"*
 - [x] The number of posts fetched per run is capped so a month of runs stays inside the free scraping credit
 - [x] Extraction requests are batched and paced to stay inside the free model quotas
 - [x] One source failing does not stop the others, and the run reports which source failed
@@ -99,3 +99,57 @@ What that costs: a group that posted fewer times than its share since the last r
 - The owner's steps, then ticking the four criteria: after the first run by hand, and after the first scheduled one.
 - Ticket 11: the first week of logs answers what could not be measured here (repeats per group, how often the models refuse at that hour, how often the last resort is used, minutes per run).
 - No ticket covers it: `sendWithRetry` asks an overloaded model three times within twenty seconds. If refusals do count against the daily quota, asking once and letting the five-minute second try do the waiting would spend a third as much.
+
+### 2026-10-05 — fixes after the two-axis code review
+
+The review covered tickets 02, 09 and 10 together. This is what it changed here.
+
+**A post left unread now fails the run, whatever batch it was in**
+
+- Before: a model that answered for a batch but left one post out, or garbled its entry, left that post counted as `unreadable` and the run green. Only a batch refused whole made the run fail. The spec and this ticket both say a run with unread posts ends as failed.
+- Now: every post still unread at the end is counted, and its group is named on a red line with how many, for example `fb-ariana-bawsla: no model could read 2 of its posts (left out of a model's answer, or garbled in it)`.
+- **Decided: such a post gets the second try within the run**, like a refused batch, and the last-resort models with it. The reason is the same: it is paid for, and in a busy group it is no longer among the newest the next day. It does not get the five-minute wait, which is for models that refuse: the run asks again after the usual five seconds.
+- What it costs: one more request on a day when a model leaves a post out. The most a run can ask is unchanged (three batches, twice).
+- A test at the collection seam was seen failing first, and so was the saved-posts replay below.
+
+**More than 100 new posts from one group no longer break on the hosted database**
+
+- The store asks the database which links it already holds with one value per link, and D1 refuses a statement that binds more than 100. Ticket 03's review removed the grouping as unneeded; with D1 real, it is back: 100 links at a time.
+- A daily run takes 6 posts a group, so this was only reached by a replay of many saved posts into the hosted database, or by a large run by hand.
+- The test runs the store on the local D1 with 250 links. It was seen failing with D1's own error ("too many SQL variables"); local SQLite would not have shown it. ADR 0003 said "about 500 posts", which is another limit; it now gives both.
+
+**Every outside request has a time limit, and the job's limit is 60 minutes**
+
+- Before, no request had a limit, the wait for a scraper run had no end, and the job stopped at 40 minutes. A job GitHub stops prints no counts and names no group.
+- Now: a request to Apify or to the database fails after 30 seconds, a request to a model after 2 minutes, and a scraper run still going after 5 minutes is given up. Each fails the usual way: the group is named and the run goes on; the next model is asked; a database request is repeated twice, then stops the run.
+- The sum, from the waits in the code, for a daily run of 30 posts in 3 batches:
+  - An ordinary day: five scraper runs, 3 model requests with 5 seconds between them, about 70 database requests. A few minutes. Not measured on GitHub.
+  - Every model refusing, each refusal answered at once, as on 2026-10-05. First try: 3 batches × 3 models × 3 requests, with 20 seconds of retries per model (27 requests, 3 minutes of waits). Then five minutes. Second try: 3 batches × 5 models, the two lite ones included (45 requests, 5 minutes of waits). In all 72 requests and 13 minutes 20 seconds of waits: about 16 minutes of reading, about 25 for the run.
+  - The same day with every scraper run slow to its limit and still succeeding: five times about 5 minutes more, about 45 minutes.
+  - Slower than that (every model taking a minute or two to answer each request) has never been seen. The job's 60 minutes is for that day, and such a job still prints no counts: nothing was built to make a stopped job print them.
+- **Not known: how long a scraper run takes.** It was never recorded. Five minutes for a few posts of one group is a guess on the generous side. If the first runs show a group failing with `was still RUNNING after 5 minutes`, raise `RUN_LIMIT_MS` in `collection/sources/facebook-apify.ts`. A run given up on carries on at Apify and its posts are billed.
+
+**Smaller changes**
+
+- `--hosted` and `--preview` are read in one place (`db/target.ts`) by the collection run and the two database commands. A collection run given `--preview` now stops with a message; before, the word was ignored.
+- The hosted database's identifier is read from `wrangler.jsonc` in one place (`db/wrangler-config.ts`), by the run and by the check before a deploy.
+- The retry waits of the D1 client are no longer part of the account's description; the true-or-false argument that told the first try from the last is gone; the batch size and the pause are written once, and the evaluation takes them from the run.
+- The owner's page (`docs/daily-collection.md`) has the new red lines, the time limits and the sum.
+
+**How it was checked**
+
+- 142 tests pass (10 more than before), type checking passes, `npm run build` and the Cloudflare build pass.
+- The workflow file passes the same structure check as before. Its last step, taken from the file and run in bash with made-up keys and every outside request answered on this machine: the scheduled form took 6 posts from each of 5 groups, named the five groups (their requests were refused here) and ended with exit code 1; the by-hand form passed `--posts 2`.
+- The same command replaying the 168 saved posts into the stand-in for Cloudflare, with the stand-in model that answers for 2 posts of every 10. Before this fix it stored 34 read posts and ended with exit code 0, with 134 posts unread. Now it says "No model read 134 post(s) … Trying once more in 5 seconds", reads 28 more at the second try (31 listings, 62 read posts), names each of the five groups with its count of unread posts, and ends with exit code 1.
+- With the placeholder identifier, the hosted run stops before any request (0 attempted).
+- No model, Apify or Cloudflare call was made.
+
+**Left as it is, and why**
+
+- The tests that check the order of the prompts and the number of extractor calls (`collection/collect.test.ts`). The extractor there is the fake at the collection seam, and the spec's own list for that seam has "text handed to the extractor" and "not read again": what the extractor receives is what a caller at the seam observes.
+- The second criterion above stays ticked; its line now says plainly that it is not met as written.
+- `sendWithRetry` still asks an overloaded model three times within twenty seconds (see "Left for others" above).
+
+**For the owner**
+
+- The spec gained one sentence, under Extraction: a post a model leaves out of its answer gets the same second try, without the wait.
