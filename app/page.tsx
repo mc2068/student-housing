@@ -2,34 +2,14 @@ import { faculties } from "../collection/data";
 import { VISIBLE_DAYS } from "../collection/domain";
 import { searchListings } from "../search/search";
 import { database } from "./database";
+import { activeFilterLabels, facultyIdFromParams, filtersFromParams, PARAM, type SearchParams } from "./filters";
 import { neighbourhoodName } from "./labels";
 import { ListingCard } from "./listing-card";
+import { SearchForm } from "./search-form";
 
-// Students know their faculty by its acronym, so the list is in acronym order, whatever the type.
-const FACULTIES = [...faculties].sort((a, b) => a.short.localeCompare(b.short, "fr"));
-
-function SearchForm({ facultyId }: { facultyId?: string }) {
-  return (
-    <form className="search" action="/" method="get">
-      <label htmlFor="faculte">Votre faculté, école ou institut</label>
-      <select id="faculte" name="faculte" defaultValue={facultyId ?? ""} required>
-        <option value="" disabled>
-          Choisir dans la liste
-        </option>
-        {FACULTIES.map((faculty) => (
-          <option key={faculty.id} value={faculty.id}>
-            {faculty.short} : {faculty.name}
-          </option>
-        ))}
-      </select>
-      <button type="submit">Voir les annonces</button>
-    </form>
-  );
-}
-
-export default async function Page({ searchParams }: { searchParams: Promise<{ faculte?: string | string[] }> }) {
-  const { faculte } = await searchParams;
-  const faculty = faculties.find((f) => f.id === faculte);
+export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
+  const faculty = faculties.find((f) => f.id === facultyIdFromParams(params));
 
   if (!faculty) {
     return (
@@ -55,29 +35,45 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   }
 
   const now = new Date();
-  const listings = await searchListings({ facultyId: faculty.id }, { db: database(), faculties, now });
+  const filters = filtersFromParams(params);
+  const active = activeFilterLabels(filters);
+  const listings = await searchListings({ facultyId: faculty.id, ...filters }, { db: database(), faculties, now });
+  const allListings = `/?${PARAM.faculty}=${faculty.id}`;
 
   return (
     <>
       <section className="hero hero-compact">
         <div className="column">
-          <SearchForm facultyId={faculty.id} />
+          <SearchForm facultyId={faculty.id} filters={filters} />
         </div>
       </section>
       <main className="column">
         <h1 className="results-title">{faculty.name}</h1>
         <p className="results-summary">
           {listings.length === 0
-            ? `Aucune annonce de moins de ${VISIBLE_DAYS} jours dans les quartiers proches pour le moment.`
+            ? active.length === 0
+              ? `Aucune annonce de moins de ${VISIBLE_DAYS} jours dans les quartiers proches pour le moment.`
+              : `Aucune annonce de moins de ${VISIBLE_DAYS} jours ne correspond à ces critères.`
             : `${listings.length} ${listings.length === 1 ? "annonce" : "annonces"} de moins de ${VISIBLE_DAYS} jours, les plus récentes d'abord.`}
         </p>
         <p className="results-places">
           Quartiers proches ({faculty.campus}) : {faculty.neighbourhoods.map(neighbourhoodName).join(", ")}.
         </p>
+        {active.length > 0 && (
+          <div className="results-filters">
+            <ul>
+              {active.map((label) => (
+                <li key={label}>{label}</li>
+              ))}
+            </ul>
+            <a href={allListings}>Retirer les filtres</a>
+          </div>
+        )}
         {listings.length === 0 ? (
           <p className="note">
-            De nouvelles annonces arrivent régulièrement. Revenez bientôt, ou choisissez un établissement voisin dans
-            la liste.
+            {active.length === 0
+              ? "De nouvelles annonces arrivent régulièrement. Revenez bientôt, ou choisissez un établissement voisin dans la liste."
+              : "Essayez d'augmenter votre budget ou de retirer un filtre. De nouvelles annonces arrivent régulièrement."}
           </p>
         ) : (
           <ol className="results">

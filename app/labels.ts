@@ -1,6 +1,7 @@
 // The French wording of a listing's facts, in one place.
 import { facebookGroups, neighbourhoods } from "../collection/data";
 import type { GenderRestriction, Kind } from "../collection/domain";
+import { LARGEST_SIZE_CHOICE } from "../search/search";
 
 export const KIND_LABEL: Record<Kind, string> = { rental: "Location", flatshare: "Colocation" };
 
@@ -13,15 +14,27 @@ export interface FactLabel {
   stated: boolean;
 }
 
+const sizeName = (size: number) => (size === 0 ? "Studio" : `S+${size}`);
+
 export function sizeLabel(size: number | null): FactLabel {
   if (size === null) return { text: "Taille non précisée", stated: false };
-  return { text: size === 0 ? "Studio" : `S+${size}`, stated: true };
+  return { text: sizeName(size), stated: true };
 }
+
+/** A size as the search form offers it; the largest choice also covers every larger unit. */
+export function sizeChoiceLabel(size: number): string {
+  return size === LARGEST_SIZE_CHOICE ? `${sizeName(size)} et +` : sizeName(size);
+}
+
+export const furnishedName = (furnished: boolean) => (furnished ? "Meublé" : "Non meublé");
 
 export function furnishedLabel(furnished: boolean | null): FactLabel {
   if (furnished === null) return { text: "Meublé ou non : non précisé", stated: false };
-  return { text: furnished ? "Meublé" : "Non meublé", stated: true };
+  return { text: furnishedName(furnished), stated: true };
 }
+
+/** An amount in dinars as the site writes it: "1 300 DT". */
+export const dinars = (amount: number) => `${amount.toLocaleString("fr-FR")} DT`;
 
 export function genderRestrictionLabel(genderRestriction: GenderRestriction): FactLabel {
   if (genderRestriction === "unspecified") return { text: "Filles ou garçons : non précisé", stated: false };

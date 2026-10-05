@@ -45,6 +45,16 @@ A listing the site owner removed after a report; it stays removed even if its so
 One pass over every source that gathers its newest posts and turns the offers among them into listings.
 _Avoid_: Scrape, crawl, sync
 
+### Search
+
+**Filter** (*filtre*):
+An optional choice that narrows a search around a faculty: kind, a budget, gender, sizes, furnished. A filter leaves a listing out of the results; "hidden" is kept for a hidden listing.
+_Avoid_: Criterion (the search criteria are the faculty plus the filters)
+
+**Budget**:
+The most a student will pay a month. The per-person budget limits flatshares and the whole-unit budget limits rentals; neither touches the other kind.
+_Avoid_: Max price, price limit
+
 ### Places
 
 **Source**:

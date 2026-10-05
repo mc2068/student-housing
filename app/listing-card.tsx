@@ -1,6 +1,7 @@
 import type { Listing } from "../search/search";
 import {
   age,
+  dinars,
   type FactLabel,
   furnishedLabel,
   genderRestrictionLabel,
@@ -30,7 +31,7 @@ export function ListingCard({ listing, now }: { listing: Listing; now: Date }) {
         <p className="card-price card-price-unstated">Prix non précisé</p>
       ) : (
         <p className="card-price">
-          <span className="card-amount">{listing.price.toLocaleString("fr-FR")} DT</span>
+          <span className="card-amount">{dinars(listing.price)}</span>
           <span className="card-basis"> par mois, {PRICE_BASIS_LABEL[listing.kind]}</span>
         </p>
       )}
