@@ -15,7 +15,7 @@ There are two, and the statements are the same on both. Only the start of the co
 
 The steps below are written for the hosted database. It needs this machine logged in to Cloudflare (`npx wrangler login`, see [deploy.md](deploy.md)). To act on the local one, write `npm run sql --` in place of `npm run hosted:sql --`.
 
-Until the daily collection writes to the hosted database (ticket 10), collection runs fill the local one and `npm run hosted:fill` copies it over. A listing hidden on the hosted database stays hidden after such a copy. If you also erase its line (see "When the author asks for removal"), erase it on the local database too, or the next copy stores it again.
+The daily collection writes to the hosted database ([daily-collection.md](daily-collection.md)). A collection run on this machine fills the local one, and `npm run hosted:fill` copies it over. A listing hidden on the hosted database stays hidden after such a copy and after every daily run. If you also erase its line (see "When the author asks for removal"), erase it on the local database too, or the next copy stores it again.
 
 ## Steps
 

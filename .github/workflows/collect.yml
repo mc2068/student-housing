@@ -1,0 +1,59 @@
+# The daily collection run (docs/daily-collection.md): the newest posts of each Facebook group, read by a
+# model, and the offers among them written to the hosted database the site reads.
+# Its four keys are the repository's secrets. None is in this file or anywhere else in the repository.
+name: Daily collection
+
+on:
+  schedule:
+    # 05:17 UTC is 06:17 in Tunis all year. Off the hour, when GitHub starts scheduled runs late.
+    - cron: "17 5 * * *"
+  # The "Run workflow" button of the Actions tab.
+  workflow_dispatch:
+    inputs:
+      posts:
+        description: Newest posts to take from each Facebook group (about $0.005 each)
+        type: choice
+        options: ["1", "2", "3", "4", "5", "6"]
+        default: "2"
+
+# The job reads the repository and nothing more.
+permissions:
+  contents: read
+
+# A run started while another is going waits for it, so the same posts are not paid for and read twice.
+concurrency:
+  group: collection
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: Collection run
+    runs-on: ubuntu-latest
+    # A run takes a few minutes, and about twenty when the models are overloaded and it waits to try
+    # them again. This stops one that hangs on a source.
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # A scheduled run has no choice of posts and takes each group's daily share (collection/credit.ts).
+      # The step ends as failed when a source or a batch failed, after doing all the others.
+      - name: Collect, read and store
+        env:
+          POSTS: ${{ inputs.posts }}
+          APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$POSTS" ]; then
+            npm run collect:hosted -- --posts "$POSTS"
+          else
+            npm run collect:hosted
+          fi

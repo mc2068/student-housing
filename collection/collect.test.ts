@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Db, openSqlite } from "../db/db";
-import { runCollection } from "./collect";
+import { failures, runCollection } from "./collect";
 import type { Extractor, RawPost, Source } from "./domain";
 import { modelExtractor, withFallback } from "./extract/extractor";
 import { MASK } from "./redact";
@@ -51,8 +51,8 @@ function spyExtractor() {
 async function setup() {
   const db = openSqlite(":memory:");
   const store = await createStore(db);
-  const collect = (sources: Source[], extractor: Extractor) =>
-    runCollection({ sources, extractor, store, now: NOW, pauseMs: 0 });
+  const collect = (sources: Source[], extractor: Extractor, lastResort?: Extractor) =>
+    runCollection({ sources, extractor, lastResort, store, now: NOW, pauseMs: 0, secondTryAfterMs: 0 });
   return { db, store, collect };
 }
 
@@ -225,6 +225,69 @@ describe("collection run", () => {
     expect(report["fb-a"]).toMatchObject({ listings: 1, unreadable: 0 });
   });
 
+  it("tries once more, after the other batches, a batch that no model could read", async () => {
+    const { db, collect } = await setup();
+    const texts = Array.from({ length: 12 }, (_, i) => `studio manar ${i}`);
+    const model = fakeModel(Object.fromEntries(texts.map((t) => [t, OFFER])));
+    // Every model is overloaded for the first request of the run, and answers from then on.
+    let requests = 0;
+    const overloadedAtFirst: Extractor = {
+      name: "overloaded at first",
+      extract: (batch) => (++requests === 1 ? Promise.reject(new Error("model overloaded")) : model.extractor.extract(batch)),
+    };
+
+    const lastResort = spyExtractor();
+
+    const report = await collect([source("fb-a", texts.map((t, i) => post(i, t)))], overloadedAtFirst, lastResort.extractor);
+
+    expect(await listings(db)).toHaveLength(12);
+    expect(report["fb-a"]).toMatchObject({ listings: 12, unreadable: 0, byLastResort: 0 });
+    expect(failures(report)).toEqual([]);
+    // The two posts of the second batch were read before the ten that had to wait.
+    expect(model.prompts).toHaveLength(2);
+    expect(model.prompts[0]).toContain("studio manar 11");
+    expect(model.prompts[1]).toContain("studio manar 0");
+    // The usual models answered at the second try, so the last-resort ones were not asked.
+    expect(lastResort.received).toEqual([]);
+  });
+
+  it("hands a batch to the last-resort models only once the usual ones have failed it twice", async () => {
+    const { db, collect } = await setup();
+    let requests = 0;
+    const overloaded: Extractor = {
+      name: "overloaded",
+      extract: async () => {
+        requests++;
+        throw new Error("model overloaded");
+      },
+    };
+    const lastResort = spyExtractor();
+
+    const report = await collect([source("fb-a", [post(1, "S+1 bardo 800dt")])], overloaded, lastResort.extractor);
+
+    expect(requests).toBe(2);
+    expect(lastResort.received).toEqual(["S+1 bardo 800dt"]);
+    expect(await listings(db)).toHaveLength(1);
+    // Read, so not a failure; counted apart, because these models get more facts wrong.
+    expect(report["fb-a"]).toMatchObject({ listings: 1, unreadable: 0, byLastResort: 1 });
+    expect(failures(report)).toEqual([]);
+  });
+
+  it("reports the failure when the last-resort models fail too", async () => {
+    const { db, collect } = await setup();
+    const failing = (name: string, reason: string): Extractor => ({
+      name,
+      extract: async () => {
+        throw new Error(reason);
+      },
+    });
+
+    const report = await collect([source("fb-a", [post(1, "studio manar")])], failing("usual", "model overloaded"), failing("small", "quota spent"));
+
+    expect(await listings(db)).toEqual([]);
+    expect(report["fb-a"]).toMatchObject({ listings: 0, unreadable: 1, byLastResort: 0, extractionError: "quota spent" });
+  });
+
   it("leaves unread posts for the next run when no model can read them", async () => {
     const { db, collect } = await setup();
     const broken = modelExtractor("broken", async () => {
@@ -234,6 +297,7 @@ describe("collection run", () => {
 
     const first = await collect([source("fb-a", posts)], broken);
     expect(first["fb-a"]).toMatchObject({ listings: 0, unreadable: 1, extractionError: "quota spent" });
+    expect(failures(first)).toEqual(["fb-a: no model could read a batch of its posts (quota spent)"]);
     expect(await listings(db)).toEqual([]);
 
     const second = await collect([source("fb-a", posts)], fakeModel({ "studio manar": OFFER }).extractor);
@@ -279,6 +343,18 @@ describe("collection run", () => {
     expect(report["tayara"]).toMatchObject({ collected: 0, error: "site unreachable" });
     expect(report["fb-a"]).toMatchObject({ listings: 1 });
     expect(await listings(db)).toHaveLength(1);
+    expect(failures(report)).toEqual(["tayara: its posts could not be collected (site unreachable)"]);
+  });
+
+  it("names no failure when every source was collected and every batch read", async () => {
+    const { collect } = await setup();
+    // The second post is skipped by the model: it is left for the next run, which is not a failure.
+    const { extractor } = fakeModel({ "studio manar": OFFER });
+
+    const report = await collect([source("fb-a", [post(1, "studio manar"), post(2, "texte illisible")])], extractor);
+
+    expect(report["fb-a"]).toMatchObject({ listings: 1, unreadable: 1 });
+    expect(failures(report)).toEqual([]);
   });
 
   it("skips posts older than 14 days without reading them", async () => {
@@ -319,8 +395,8 @@ describe("collection run", () => {
     );
 
     expect(report).toEqual({
-      "fb-a": { collected: 3, expired: 0, hidden: 0, alreadySeen: 0, listings: 1, demands: 1, notHousing: 1, noNeighbourhood: 0, unreadable: 0 },
-      "fb-b": { collected: 2, expired: 0, hidden: 0, alreadySeen: 0, listings: 1, demands: 0, notHousing: 0, noNeighbourhood: 1, unreadable: 0 },
+      "fb-a": { collected: 3, expired: 0, hidden: 0, alreadySeen: 0, listings: 1, demands: 1, notHousing: 1, noNeighbourhood: 0, unreadable: 0, byLastResort: 0 },
+      "fb-b": { collected: 2, expired: 0, hidden: 0, alreadySeen: 0, listings: 1, demands: 0, notHousing: 0, noNeighbourhood: 1, unreadable: 0, byLastResort: 0 },
     });
   });
 

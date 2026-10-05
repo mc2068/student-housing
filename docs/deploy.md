@@ -45,7 +45,7 @@ Do these once, in order.
 
    It ends with a table showing `0` listings. The tables come from `db/schema.sql`, the same file the local database is made from. Run it again whenever that file changes; tables already there are left alone.
 
-6. **Copy your local listings to it**, so the site has something to show before the daily collection exists (ticket 10).
+6. **Copy your local listings to it**, so the site has something to show before the daily collection runs.
 
    ```bash
    npm run hosted:fill
@@ -91,16 +91,6 @@ This builds the site exactly as `npm run deploy` does and serves it at <http://l
 - **Nothing secret is in the repository.** `wrangler.jsonc` holds names and one identifier. Your login stays in your user folder; `.env.local` and `.env.collect` are ignored by git.
 - **The site's name.** `logement-etudiant` in `wrangler.jsonc` is the start of the address. Change it before step 7 if you want another.
 
-## For the daily collection (ticket 10)
+## Next: the daily collection
 
-Not needed to put the site online. The daily collection runs on GitHub, so the project must be there:
-
-1. Create an empty repository at <https://github.com/new> (no README, no licence).
-2. Send the project to it, with the address GitHub shows you:
-
-   ```bash
-   git remote add origin https://github.com/<you>/<repository>.git
-   git push -u origin main
-   ```
-
-The keys the collection needs will go in the repository's secrets on GitHub, never in its files. Those steps come with ticket 10.
+The site shows what the hosted database holds, and so far that is the copy of step 6. To have it filled every morning without your machine, follow [Run the collection every day](daily-collection.md): the project goes on GitHub, and four keys go in the repository's secrets there, never in its files.
