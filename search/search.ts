@@ -71,7 +71,7 @@ const toListing = (row: ListingRow): Listing => ({
 
 const placeholders = (values: unknown[]) => values.map(() => "?").join(", ");
 
-/** The listings a student sees for these criteria: still visible, newest first. */
+/** The listings a student sees for these criteria: still visible, not hidden, newest first. */
 export async function searchListings(
   criteria: SearchCriteria,
   { db, faculties, now = new Date() }: SearchOptions,
@@ -89,6 +89,7 @@ export async function searchListings(
   where(`neighbourhood_id IN (${placeholders(neighbourhoodIds)})`, ...neighbourhoodIds);
   // The store writes every post date in the UTC form, which sorts as text in date order.
   where("posted_at >= ?", new Date(now.getTime() - VISIBLE_MS).toISOString());
+  where("url NOT IN (SELECT url FROM hidden_listings)");
   if (criteria.kind) where("kind = ?", criteria.kind);
   // A listing without a price never passes "price <= ?", so a budget leaves it out, for its own kind only.
   if (criteria.perPersonBudget !== undefined) where("(kind <> 'flatshare' OR price <= ?)", criteria.perPersonBudget);

@@ -11,6 +11,7 @@ import {
   sizeLabel,
   sourceLabel,
 } from "./labels";
+import { reportLink } from "./report";
 
 function Fact({ text, stated }: FactLabel) {
   return <li className={stated ? "fact" : "fact fact-unstated"}>{text}</li>;
@@ -58,6 +59,9 @@ export function ListingCard({ listing, now }: { listing: Listing; now: Date }) {
             Groupe <bdi>{source.group}</bdi>
           </p>
         )}
+        <a className="card-report" href={reportLink(listing.url)}>
+          Signaler cette annonce
+        </a>
       </footer>
     </article>
   );

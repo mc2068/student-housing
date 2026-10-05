@@ -4,6 +4,7 @@ node_modules/
 .wrangler/
 .env
 .env.*
+!.env.example
 .dev.vars
 proof/
 *.db

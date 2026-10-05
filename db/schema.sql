@@ -22,3 +22,10 @@ CREATE TABLE IF NOT EXISTS collected_posts (
   outcome TEXT NOT NULL CHECK (outcome IN ('listing', 'demand', 'not_housing', 'no_neighbourhood')),
   collected_at TEXT NOT NULL
 );
+
+-- Links of the listings the site owner has hidden, entered by hand (docs/hide-a-listing.md).
+-- While a link is here, search never shows its listing and a collection run never reads its post.
+CREATE TABLE IF NOT EXISTS hidden_listings (
+  url TEXT PRIMARY KEY,
+  hidden_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);

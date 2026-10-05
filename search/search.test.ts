@@ -25,12 +25,14 @@ async function setup() {
       { offer: true, facts: { ...FACTS, ...facts } },
       NOW,
     );
+  /** The site owner's manual entry (docs/hide-a-listing.md). */
+  const hide = (n: number) => db.run("INSERT INTO hidden_listings (url) VALUES (?)", url(n));
   const search = (facultyId: string, criteria: Filters = {}) =>
     searchListings({ facultyId, ...criteria }, { db, faculties: FACULTIES, now: NOW });
   /** The numbers of the listings a search around FST finds, in ascending order. */
   const found = async (criteria: Filters = {}) =>
     (await search("fst", criteria)).map((l) => Number(l.url.split("/").at(-2))).sort((a, b) => a - b);
-  return { listing, search, found };
+  return { listing, hide, search, found };
 }
 
 describe("search", () => {
@@ -224,5 +226,18 @@ describe("search", () => {
     const found = await search("fst", { kind: "flatshare", perPersonBudget: 400, gender: "girls", sizes: [2], furnished: true });
 
     expect(found.map((l) => l.url).sort()).toEqual([url(1), url(9)]);
+  });
+
+  it("never shows a hidden listing, whatever the filters", async () => {
+    const { listing, hide, found } = await setup();
+    await listing(1);
+    await listing(2);
+    await listing(3, { kind: "rental", price: null, size: null, furnished: null, genderRestriction: "unspecified" });
+    await hide(2);
+    await hide(3);
+
+    expect(await found()).toEqual([1]);
+    expect(await found({ kind: "flatshare", perPersonBudget: 400, gender: "girls", sizes: [2], furnished: true })).toEqual([1]);
+    expect(await found({ kind: "rental" })).toEqual([]);
   });
 });

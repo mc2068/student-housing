@@ -76,6 +76,10 @@ a {
   font-size: 0.875rem;
 }
 
+.site-foot p + p {
+  margin-top: 0.5rem;
+}
+
 /* The search block */
 
 .hero {
@@ -441,6 +445,16 @@ main.column {
 
 .card-source {
   margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Quiet next to the link to the post, but still a full tap target. */
+.card-report {
+  display: block;
+  margin-top: 0.25rem;
+  padding-block: 0.75rem;
   color: var(--muted);
   font-size: 0.875rem;
   text-align: center;

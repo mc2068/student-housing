@@ -58,6 +58,9 @@ async function setup() {
 
 const listings = (db: Db) => db.all<Record<string, unknown>>("SELECT * FROM listings ORDER BY url");
 
+/** The site owner's manual entry (docs/hide-a-listing.md). */
+const hide = (db: Db, url: string) => db.run("INSERT INTO hidden_listings (url) VALUES (?)", url);
+
 /** Everything the database holds, as text, to check what can never be in it. */
 async function everythingStored(db: Db): Promise<string> {
   return JSON.stringify([await db.all("SELECT * FROM listings"), await db.all("SELECT * FROM collected_posts")]);
@@ -158,6 +161,18 @@ describe("collection run", () => {
     expect(await listings(db)).toHaveLength(1);
     expect(model.prompts).toHaveLength(1);
     expect(second["fb-a"]).toMatchObject({ collected: 2, alreadySeen: 2, listings: 0, demands: 0 });
+  });
+
+  it("neither reads nor recreates a hidden listing when its post is collected", async () => {
+    const { db, collect } = await setup();
+    const model = fakeModel({ "studio manar": OFFER, "S+1 manar": OFFER });
+    await hide(db, post(1, "").url);
+
+    const report = await collect([source("fb-a", [post(1, "studio manar"), post(2, "S+1 manar")])], model.extractor);
+
+    expect(await listings(db)).toMatchObject([{ url: post(2, "").url }]);
+    expect(model.prompts.join()).not.toContain("studio manar");
+    expect(report["fb-a"]).toMatchObject({ collected: 2, hidden: 1, alreadySeen: 0, listings: 1 });
   });
 
   it("reads once a post that two sources return in the same run", async () => {
@@ -304,8 +319,8 @@ describe("collection run", () => {
     );
 
     expect(report).toEqual({
-      "fb-a": { collected: 3, expired: 0, alreadySeen: 0, listings: 1, demands: 1, notHousing: 1, noNeighbourhood: 0, unreadable: 0 },
-      "fb-b": { collected: 2, expired: 0, alreadySeen: 0, listings: 1, demands: 0, notHousing: 0, noNeighbourhood: 1, unreadable: 0 },
+      "fb-a": { collected: 3, expired: 0, hidden: 0, alreadySeen: 0, listings: 1, demands: 1, notHousing: 1, noNeighbourhood: 0, unreadable: 0 },
+      "fb-b": { collected: 2, expired: 0, hidden: 0, alreadySeen: 0, listings: 1, demands: 0, notHousing: 0, noNeighbourhood: 1, unreadable: 0 },
     });
   });
 

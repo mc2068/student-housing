@@ -41,6 +41,10 @@ Who a listing is open to: girls only, boys only, or unspecified.
 **Hidden listing**:
 A listing the site owner removed after a report; it stays removed even if its source is collected again.
 
+**Report** (*signalement*):
+An email a student or a post author sends the site owner about one listing, asking for it to be hidden. The counts a collection run prints are its collection report, never just "report".
+_Avoid_: Flag, complaint
+
 **Collection run**:
 One pass over every source that gathers its newest posts and turns the offers among them into listings.
 _Avoid_: Scrape, crawl, sync

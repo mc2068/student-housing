@@ -5,6 +5,8 @@ import { excerpt } from "./redact";
 export interface Store {
   /** Which of these posts a model has already read, in this run or an earlier one. */
   seen(urls: string[]): Promise<Set<string>>;
+  /** Which of these posts the site owner has hidden the link of, so that they are neither read nor stored. */
+  hidden(urls: string[]): Promise<Set<string>>;
   /** Remembers that a post was read and, when it is an offer, stores its listing. */
   record(post: CollectedPost, extraction: ReadExtraction, collectedAt: Date): Promise<void>;
 }
@@ -22,15 +24,20 @@ const SAVE_LISTING = `INSERT INTO listings (${LISTING_COLUMNS.join(", ")})
 
 export async function createStore(db: Db): Promise<Store> {
   await applySchema(db);
+
+  /** Which of these links the table holds. */
+  async function linksIn(table: "collected_posts" | "hidden_listings", urls: string[]): Promise<Set<string>> {
+    if (urls.length === 0) return new Set();
+    const rows = await db.all<{ url: string }>(
+      `SELECT url FROM ${table} WHERE url IN (${urls.map(() => "?").join(", ")})`,
+      ...urls,
+    );
+    return new Set(rows.map((row) => row.url));
+  }
+
   return {
-    async seen(urls) {
-      if (urls.length === 0) return new Set();
-      const rows = await db.all<{ url: string }>(
-        `SELECT url FROM collected_posts WHERE url IN (${urls.map(() => "?").join(", ")})`,
-        ...urls,
-      );
-      return new Set(rows.map((row) => row.url));
-    },
+    seen: (urls) => linksIn("collected_posts", urls),
+    hidden: (urls) => linksIn("hidden_listings", urls),
 
     async record(post, extraction, collectedAt) {
       const collected_at = collectedAt.toISOString();

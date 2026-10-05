@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "collect": "tsx --env-file=.env.local collection/run.ts"
+    "collect": "tsx --env-file=.env.local collection/run.ts",
+    "sql": "tsx db/sql.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

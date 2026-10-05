@@ -7,6 +7,8 @@ export interface SourceReport {
   collected: number;
   /** Older than the 14 days a listing stays visible, so not worth reading. */
   expired: number;
+  /** Their listing was hidden by the site owner, so they are never read again. */
+  hidden: number;
   alreadySeen: number;
   listings: number;
   demands: number;
@@ -42,7 +44,7 @@ const COUNTER = {
 } as const satisfies Record<Outcome, keyof SourceReport>;
 
 const emptyReport = (): SourceReport => ({
-  collected: 0, expired: 0, alreadySeen: 0, listings: 0, demands: 0, notHousing: 0, noNeighbourhood: 0, unreadable: 0,
+  collected: 0, expired: 0, hidden: 0, alreadySeen: 0, listings: 0, demands: 0, notHousing: 0, noNeighbourhood: 0, unreadable: 0,
 });
 
 const message = (err: unknown) => (err instanceof Error ? err.message : String(err)).replace(/\s+/g, " ").slice(0, 200);
@@ -68,8 +70,14 @@ export async function runCollection(run: CollectionRun): Promise<CollectionRepor
 
     const fresh = posts.filter((post) => now.getTime() - new Date(post.postedAt).getTime() <= VISIBLE_MS);
     counts.expired = posts.length - fresh.length;
-    const seen = await store.seen(fresh.map((post) => post.url));
+    const urls = fresh.map((post) => post.url);
+    const hidden = await store.hidden(urls);
+    const seen = await store.seen(urls);
     for (const post of fresh) {
+      if (hidden.has(post.url)) {
+        counts.hidden++;
+        continue;
+      }
       if (seen.has(post.url) || queued.has(post.url)) {
         counts.alreadySeen++;
         continue;

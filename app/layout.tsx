@@ -27,6 +27,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <footer className="site-foot">
           <div className="column">
             <p>Les annonces viennent de groupes Facebook publics. Le contact se fait toujours sur l'annonce d'origine.</p>
+            <p>
+              Une annonce douteuse, ou la vôtre que vous souhaitez retirer du site ? Utilisez le lien « Signaler cette
+              annonce » sous l'annonce.
+            </p>
           </div>
         </footer>
       </body>
