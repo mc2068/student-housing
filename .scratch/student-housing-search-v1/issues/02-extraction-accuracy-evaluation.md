@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent (built and run; one criterion waits for the site owner, see the comment of 2026-10-05)
+**Status:** ready-for-human (built and run; one criterion waits for the site owner, see the comment of 2026-10-05)
 
 - [x] The evaluation set holds about 50 real posts covering offers, demands and unrelated posts, in French, Arabic and Tunisian Arabic in Latin letters
 - [x] Posts in the set have phone numbers masked and carry no author identity
