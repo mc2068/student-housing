@@ -4,13 +4,15 @@ A website that gathers housing offers for students in Tunisia from classified si
 
 ## Language
 
+The website's interface is in French. Where a term has a French interface word, it follows the term in italics. The _Avoid_ lists apply to code, comments and documents; interface text uses the French words.
+
 ### Listings
 
-**Post**:
+**Post** (*publication*):
 What an author published on a source, whatever it is about. A post that offers housing becomes a listing; every other post is rejected.
 _Avoid_: Message, publication
 
-**Listing**:
+**Listing** (*annonce*):
 One housing offer taken from one post on a source, always carrying a link to that post.
 _Avoid_: Offer, ad, annonce
 
@@ -48,10 +50,10 @@ _Avoid_: Scrape, crawl, sync
 **Source**:
 A classified site or public Facebook group that posts are collected from.
 
-**Faculty**:
+**Faculty** (*établissement*; the form asks for "faculté, école ou institut"):
 Any higher-education institution a student searches around, whether a faculté, école or institut.
 _Avoid_: University, school, establishment
 
-**Neighbourhood**:
+**Neighbourhood** (*quartier*):
 A named area from the curated list. A listing belongs to exactly one, and a faculty is near several.
 _Avoid_: Zone, quartier, delegation, area

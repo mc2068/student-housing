@@ -13,9 +13,15 @@ export interface Db {
   all<T>(sql: string, ...params: SqlValue[]): Promise<T[]>;
 }
 
-/** A local SQLite database; ":memory:" gives a throwaway one for tests. */
-export function openSqlite(path: string): Db {
-  const db = new DatabaseSync(path);
+/** The file a collection run writes and the local website reads. */
+export const LOCAL_DATABASE = "local.db";
+
+/**
+ * A local SQLite database; ":memory:" gives a throwaway one for tests. The website opens it
+ * read-only: it never writes, and a missing file is an error and not a new empty database.
+ */
+export function openSqlite(path: string, { readOnly = false } = {}): Db {
+  const db = new DatabaseSync(path, { readOnly });
   return {
     async exec(sql) {
       db.exec(sql);

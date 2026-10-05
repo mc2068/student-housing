@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+// Imported, not read from disk, so the website can bundle the same curated files the collection run uses.
+import facultiesFile from "../data/faculties.json";
+import neighbourhoodsFile from "../data/neighbourhoods.json";
+import sourcesFile from "../data/sources.json";
 
 export interface Neighbourhood {
   id: string;
@@ -20,10 +23,6 @@ export interface FacebookGroup {
   url: string;
 }
 
-function load<T>(file: string): T {
-  return JSON.parse(readFileSync(new URL(`../data/${file}`, import.meta.url), "utf8")) as T;
-}
-
-export const neighbourhoods = load<{ neighbourhoods: Neighbourhood[] }>("neighbourhoods.json").neighbourhoods;
-export const faculties = load<{ faculties: Faculty[] }>("faculties.json").faculties;
-export const facebookGroups = load<{ facebookGroups: FacebookGroup[] }>("sources.json").facebookGroups;
+export const neighbourhoods: Neighbourhood[] = neighbourhoodsFile.neighbourhoods;
+export const faculties: Faculty[] = facultiesFile.faculties;
+export const facebookGroups: FacebookGroup[] = sourcesFile.facebookGroups;

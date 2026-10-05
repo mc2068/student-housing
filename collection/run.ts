@@ -3,7 +3,7 @@
 //   npm run collect -- --posts 6                    newest 6 posts from each Facebook group (about $0.005 a post)
 //   npm run collect -- --replay proof/posts.json    posts saved earlier, at no scraping cost
 import { readFileSync } from "node:fs";
-import { openSqlite } from "../db/db";
+import { LOCAL_DATABASE, openSqlite } from "../db/db";
 import { runCollection } from "./collect";
 import { facebookGroups } from "./data";
 import type { Extractor, RawPost, Source } from "./domain";
@@ -53,7 +53,7 @@ const sources = replay
 const extractors: Extractor[] = GEMINI_MODELS.map((model) => geminiExtractor(env("GEMINI_API_KEY"), model));
 if (process.env.GROQ_API_KEY) extractors.push(groqExtractor(process.env.GROQ_API_KEY));
 
-const db = openSqlite("local.db");
+const db = openSqlite(LOCAL_DATABASE);
 const report = await runCollection({ sources, extractor: withFallback(extractors), store: await createStore(db) });
 
 console.table(report);

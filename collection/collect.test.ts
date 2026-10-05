@@ -87,6 +87,15 @@ describe("collection run", () => {
     ]);
   });
 
+  it("stores a post date written with a time offset as the same instant in UTC", async () => {
+    const { db, collect } = await setup();
+    const { extractor } = fakeModel({ "S+1 au Bardo": OFFER });
+
+    await collect([source("fb-a", [post(1, "S+1 au Bardo", { postedAt: "2026-10-04T11:00:00+01:00" })])], extractor);
+
+    expect(await listings(db)).toMatchObject([{ posted_at: "2026-10-04T10:00:00.000Z" }]);
+  });
+
   it("stores nothing for demands and posts not about housing", async () => {
     const { db, collect } = await setup();
     const { extractor } = fakeModel({ "je cherche une chambre": DEMAND, "frigo 350dt": NOT_HOUSING });

@@ -1,5 +1,5 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { type CollectedPost, type Extractor, isUnreadable, type Outcome, outcomeOf, type RawPost, type Source } from "./domain";
+import { type CollectedPost, type Extractor, isUnreadable, type Outcome, outcomeOf, type RawPost, type Source, VISIBLE_MS } from "./domain";
 import { stripPhoneNumbers } from "./redact";
 import type { Store } from "./store";
 
@@ -32,8 +32,6 @@ export interface CollectionRun {
   /** Wait between model requests, to stay under the free tier's requests-per-minute limit. */
   pauseMs?: number;
 }
-
-const VISIBLE_MS = 14 * 24 * 60 * 60 * 1000;
 
 // A new outcome fails to compile here until it has a counter.
 const COUNTER = {

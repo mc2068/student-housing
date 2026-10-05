@@ -16,6 +16,10 @@ export interface Source {
   collect(): Promise<RawPost[]>;
 }
 
+/** How long a listing stays visible, counted from its post date. */
+export const VISIBLE_DAYS = 14;
+export const VISIBLE_MS = VISIBLE_DAYS * 24 * 60 * 60 * 1000;
+
 export type Kind = "rental" | "flatshare";
 export type GenderRestriction = "girls" | "boys" | "unspecified";
 

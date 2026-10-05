@@ -48,7 +48,8 @@ export async function createStore(db: Db): Promise<Store> {
           furnished: facts.furnished === null ? null : Number(facts.furnished),
           gender_restriction: facts.genderRestriction,
           excerpt: excerpt(post.text),
-          posted_at: post.postedAt,
+          // Always the UTC form: search compares and sorts post dates as text.
+          posted_at: new Date(post.postedAt).toISOString(),
           collected_at,
         };
         await db.run(SAVE_LISTING, ...LISTING_COLUMNS.map((column) => row[column]));
