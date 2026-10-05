@@ -150,7 +150,7 @@ Each real adapter and each real model client is checked once against a saved sam
 
 The curated data files are checked for integrity: unique identifiers, and every faculty mapped only to neighbourhoods that exist.
 
-Extraction accuracy is not a unit test, since a model's answers vary. It is a manual evaluation: about 50 real posts with hand-written expected facts, scored per field, run during the pipeline proof and again whenever the prompt or model changes.
+Extraction accuracy is not a unit test, since a model's answers vary. It is a manual evaluation: an evaluation set of 50 real posts from the pipeline proof with hand-written expected facts, scored per field by one command, run whenever the prompt or model changes. The command runs the same chain of models as a collection run and is not part of the test run. The set holds post texts, so it stays in a local, uncommitted file (ADR 0002); only the scoring is tested, on made-up posts.
 
 The website's pages are checked by hand on a phone-sized viewport: search for one faculty and follow a listing's link to its source.
 

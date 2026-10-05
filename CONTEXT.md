@@ -49,6 +49,10 @@ _Avoid_: Flag, complaint
 One pass over every source that gathers its newest posts and turns the offers among them into listings.
 _Avoid_: Scrape, crawl, sync
 
+**Evaluation set**:
+Real posts kept with the facts a person reading each one expects, used to measure by hand how well posts are turned into facts. Its posts carry no author and no phone number, and it is never committed.
+_Avoid_: Test set, benchmark, golden set
+
 ### Search
 
 **Filter** (*filtre*):
