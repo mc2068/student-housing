@@ -37,7 +37,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sea
   const now = new Date();
   const filters = filtersFromParams(params);
   const active = activeFilterLabels(filters);
-  const listings = await searchListings({ facultyId: faculty.id, ...filters }, { db: database(), faculties, now });
+  const listings = await searchListings({ facultyId: faculty.id, ...filters }, { db: await database(), faculties, now });
   const allListings = `/?${PARAM.faculty}=${faculty.id}`;
 
   return (

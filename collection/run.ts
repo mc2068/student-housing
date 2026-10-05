@@ -1,5 +1,5 @@
 // One collection run into the local database.
-// Keys come from .env.local: APIFY_API_KEY, GEMINI_API_KEY, and optionally GROQ_API_KEY.
+// Keys come from .env.collect: APIFY_API_KEY, GEMINI_API_KEY, and optionally GROQ_API_KEY.
 //   npm run collect -- --posts 6                    newest 6 posts from each Facebook group (about $0.005 a post)
 //   npm run collect -- --replay proof/posts.json    posts saved earlier, at no scraping cost
 import { readFileSync } from "node:fs";

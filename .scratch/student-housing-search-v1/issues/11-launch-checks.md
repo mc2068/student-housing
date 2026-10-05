@@ -26,3 +26,8 @@
 - Mubawab's robots.txt and terms of use were read on 2026-10-05; what they say is recorded in ticket 08's comments. In short: robots.txt allows rental search pages and listing pages (but bars any address containing a colon); the terms forbid reading the site with software of one's own, extracting from its database, and reusing its content elsewhere, a link included, without the company's prior permission.
 - That conflicts with collecting and showing Mubawab listings as the spec plans, more plainly than for Tayara, so ticket 08 stopped before any code and the owner has to decide.
 - Both classified sites are now waiting on the owner. Until one says yes or the owner decides otherwise, the public Facebook groups are the only source.
+
+### 2026-10-05 — Cloudflare's free quotas read (from ticket 09)
+
+- The free limits for Workers and D1 were read from Cloudflare's own pages on 2026-10-05 and compared with expected use; the figures and page addresses are in ticket 09's comments. All fit, with one open point: the 10 ms of processor time per request can only be measured on the live site (step 9 of `docs/deploy.md`).
+- The box above stays unticked until that figure has been read on the live site.

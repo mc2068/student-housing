@@ -1,6 +1,6 @@
 // Measures extraction against the evaluation set: real posts, each with the facts a person expects.
 // Not a test: a model's answers vary. Run it by hand whenever the prompt or the models change.
-// The key comes from .env.local: GEMINI_API_KEY, and optionally GROQ_API_KEY.
+// The key comes from .env.collect: GEMINI_API_KEY, and optionally GROQ_API_KEY.
 //   npm run evaluate                      every post through the models: one request per 10 posts
 //   npm run evaluate -- --keep-answers    keeps the answers of the last run and sends only the posts without one;
 //                                         after expected facts are corrected, it scores again at no model cost
