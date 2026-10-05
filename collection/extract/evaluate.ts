@@ -12,7 +12,7 @@ import { neighbourhoods } from "../data";
 import { type Extractor, isUnreadable, type ReadExtraction } from "../domain";
 import { formatReport, parseEvaluationSet, reviewPage, score } from "./evaluation";
 import { withFallback } from "./extractor";
-import { configuredExtractors } from "./models";
+import { configuredExtractors, lastResortExtractors } from "./models";
 
 const SET = "proof/evaluation-set.json";
 const ANSWERS = "proof/evaluation-answers.json";
@@ -45,7 +45,8 @@ const noting = (extractor: Extractor): Extractor => ({
 
 const unread = set.posts.filter((post) => !answers[post.url]);
 if (unread.length > 0) {
-  const extractor = withFallback(configuredExtractors().map(noting));
+  // Every model a collection run may use, the last-resort ones after the others: the report says who read what.
+  const extractor = withFallback([...configuredExtractors(), ...lastResortExtractors()].map(noting));
   for (let start = 0; start < unread.length; start += BATCH_SIZE) {
     if (start > 0) await sleep(PAUSE_MS);
     const batch = unread.slice(start, start + BATCH_SIZE);

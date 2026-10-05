@@ -1,10 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { getPlatformProxy } from "wrangler";
 import type { Faculty } from "../collection/data";
 import type { ListingFacts } from "../collection/domain";
 import { createStore } from "../collection/store";
 import { searchListings } from "../search/search";
 import { type D1Binding, openD1 } from "./d1";
+import { openD1OverHttp } from "./d1-http";
 import { type Db, openSqlite } from "./db";
 
 const NOW = new Date("2026-10-05T12:00:00.000Z");
@@ -48,11 +49,32 @@ describe("the D1 database", () => {
 
   afterAll(() => dispose?.());
 
+  // Each test fills the one database from nothing.
+  afterEach(async () => {
+    vi.unstubAllGlobals();
+    for (const table of ["listings", "collected_posts", "hidden_listings"]) await d1.prepare(`DROP TABLE IF EXISTS ${table}`).run();
+  });
+
   it("stores and finds listings exactly as local SQLite does", async () => {
     const onD1 = await fillAndSearch(openD1(d1));
 
     expect(onD1.all.map((l) => l.url)).toEqual([url(6), url(2), url(3)]);
     expect(onD1.all[0]?.price).toBe(400);
     expect(onD1).toEqual(await fillAndSearch(openSqlite(":memory:")));
+  });
+
+  // The daily collection run reaches the hosted database from outside Cloudflare (db/d1-http.ts). Cloudflare's
+  // side of that is played here by this local D1, handed each statement and its values as they arrive.
+  it("stores and finds the same listings when reached over Cloudflare's HTTP API", async () => {
+    vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+      const { sql, params } = JSON.parse(String(init.body)) as { sql: string; params?: (string | number | null)[] };
+      const answer = params ? await d1.prepare(sql).bind(...params).all() : await d1.prepare(sql).run();
+      return Response.json({ errors: [], messages: [], result: [answer], success: true });
+    });
+
+    const overHttp = await fillAndSearch(openD1OverHttp({ accountId: "account", databaseId: "database", apiToken: "token", retryWaitsMs: [] }));
+
+    expect(overHttp.all.map((l) => l.url)).toEqual([url(6), url(2), url(3)]);
+    expect(overHttp).toEqual(await fillAndSearch(openSqlite(":memory:")));
   });
 });

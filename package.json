@@ -11,6 +11,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "collect": "tsx --env-file=.env.collect collection/run.ts",
+    "collect:hosted": "tsx collection/run.ts --hosted",
     "sql": "tsx db/sql.ts",
     "evaluate": "tsx --env-file=.env.collect collection/extract/evaluate.ts",
     "hosted:schema": "tsx db/hosted.ts schema",

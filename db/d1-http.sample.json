@@ -1,0 +1,29 @@
+{
+  "errors": [],
+  "messages": [],
+  "result": [
+    {
+      "meta": {
+        "changed_db": false,
+        "changes": 0,
+        "duration": 0.2,
+        "last_row_id": 0,
+        "rows_read": 2,
+        "rows_written": 0,
+        "served_by_colo": "LHR",
+        "served_by_primary": true,
+        "served_by_region": "WEUR",
+        "size_after": 114688,
+        "timings": {
+          "sql_duration_ms": 0.2
+        }
+      },
+      "results": [
+        { "url": "https://www.facebook.com/groups/1/permalink/1/", "price": 350, "size": null },
+        { "url": "https://www.facebook.com/groups/1/permalink/2/", "price": null, "size": 2 }
+      ],
+      "success": true
+    }
+  ],
+  "success": true
+}
