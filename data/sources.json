@@ -1,0 +1,10 @@
+{
+  "note": "facebookGroups must be public groups only (see docs/adr/0001). Each was checked as 'Public group' on its logged-out Facebook page on 2026-10-04 and found active in the pipeline proof.",
+  "facebookGroups": [
+    { "id": "fb-colocation-tunis", "name": "COLOCATION TUNIS", "url": "https://www.facebook.com/groups/1610063532653404/" },
+    { "id": "fb-colocation-tunis-2", "name": "COLOCATION TUNIS", "url": "https://www.facebook.com/groups/997925531076238/" },
+    { "id": "fb-ariana-bawsla", "name": "ARIANA - location & co-location", "url": "https://www.facebook.com/groups/ariana.bawsla.tn/" },
+    { "id": "fb-colocation-filles-tunis", "name": "COLOCATION FILLES TUNIS", "url": "https://www.facebook.com/groups/934429079984138/" },
+    { "id": "fb-manazel-talaba", "name": "منازل للكراء لطلبة في تونس", "url": "https://www.facebook.com/groups/1918956848427654/" }
+  ]
+}

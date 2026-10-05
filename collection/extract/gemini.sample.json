@@ -1,0 +1,31 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "[\n  {\n    \"i\": 0,\n    \"offer\": true,\n    \"reason\": null,\n    \"kind\": \"flatshare\",\n    \"price\": 350,\n    \"neighbourhood\": \"el-manar\",\n    \"size\": 2,\n    \"furnished\": true,\n    \"gender\": \"girls\"\n  },\n  {\n    \"i\": 1,\n    \"offer\": false,\n    \"reason\": \"demand\",\n    \"kind\": null,\n    \"price\": null,\n    \"neighbourhood\": null,\n    \"size\": null,\n    \"furnished\": null,\n    \"gender\": \"unspecified\"\n  }\n]",
+            "thoughtSignature": "EmAKXgFpFH0TkjRCASsuQ83Z7IKDFL7JqryVEiWcrsAgVrXuJZBwGbk4LlpimiSY/5jUEIqFwTouLhuu94Vm+7YipbT+t5neQ0Q7fR8/5SvkinnX3DCUVpOqtuYPeYbGQSI="
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1572,
+    "candidatesTokenCount": 159,
+    "totalTokenCount": 1731,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1572
+      }
+    ],
+    "serviceTier": "standard"
+  },
+  "modelVersion": "gemini-3.5-flash-lite",
+  "responseId": "17bCape2CPuYkdUPpsPDuAg"
+}

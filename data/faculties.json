@@ -1,0 +1,146 @@
+{
+  "reviewed": true,
+  "note": "Drafted from general knowledge and approved by the site owner on 2026-10-04. 'neighbourhoods' holds ids from neighbourhoods.json, in no particular order.",
+  "faculties": [
+    {
+      "id": "fst",
+      "name": "Faculté des Sciences de Tunis",
+      "short": "FST",
+      "campus": "Campus El Manar",
+      "neighbourhoods": ["el-manar", "el-menzah-9", "el-menzah-7-8", "el-menzah-5-6", "el-menzah-1-4", "cite-ibn-khaldoun", "el-omrane", "ras-tabia"]
+    },
+    {
+      "id": "enit",
+      "name": "École Nationale d'Ingénieurs de Tunis",
+      "short": "ENIT",
+      "campus": "Campus El Manar",
+      "neighbourhoods": ["el-manar", "el-menzah-9", "el-menzah-7-8", "el-menzah-5-6", "el-menzah-1-4", "cite-ibn-khaldoun", "el-omrane", "ras-tabia"]
+    },
+    {
+      "id": "fsegt",
+      "name": "Faculté des Sciences Économiques et de Gestion de Tunis",
+      "short": "FSEGT",
+      "campus": "Campus El Manar",
+      "neighbourhoods": ["el-manar", "el-menzah-9", "el-menzah-7-8", "el-menzah-5-6", "el-menzah-1-4", "cite-ibn-khaldoun", "el-omrane", "ras-tabia"]
+    },
+    {
+      "id": "fdspt",
+      "name": "Faculté de Droit et des Sciences Politiques de Tunis",
+      "short": "FDSPT",
+      "campus": "Campus El Manar",
+      "neighbourhoods": ["el-manar", "el-menzah-9", "el-menzah-7-8", "el-menzah-5-6", "el-menzah-1-4", "cite-ibn-khaldoun", "el-omrane", "ras-tabia"]
+    },
+    {
+      "id": "fmt",
+      "name": "Faculté de Médecine de Tunis",
+      "short": "FMT",
+      "campus": "La Rabta, Bab Saadoun",
+      "neighbourhoods": ["bab-saadoun", "le-bardo", "ras-tabia", "el-omrane", "medina", "bab-el-khadra"]
+    },
+    {
+      "id": "insat",
+      "name": "Institut National des Sciences Appliquées et de Technologie",
+      "short": "INSAT",
+      "campus": "Centre Urbain Nord",
+      "neighbourhoods": ["centre-urbain-nord", "cite-el-khadra", "charguia", "cite-olympique", "el-menzah-1-4", "el-menzah-5-6", "ariana-ville"]
+    },
+    {
+      "id": "fsjpst",
+      "name": "Faculté des Sciences Juridiques, Politiques et Sociales de Tunis",
+      "short": "FSJPST",
+      "campus": "Centre Urbain Nord",
+      "neighbourhoods": ["centre-urbain-nord", "cite-el-khadra", "charguia", "cite-olympique", "el-menzah-1-4", "el-menzah-5-6", "ariana-ville"]
+    },
+    {
+      "id": "isi",
+      "name": "Institut Supérieur d'Informatique",
+      "short": "ISI",
+      "campus": "Ariana",
+      "neighbourhoods": ["ariana-ville", "el-menzah-5-6", "el-menzah-7-8", "ennasr", "borj-louzir", "ariana-essoughra", "ennkhilette", "jardins-el-menzah"]
+    },
+    {
+      "id": "supcom",
+      "name": "École Supérieure des Communications de Tunis",
+      "short": "SUP'COM",
+      "campus": "Technopole El Ghazela",
+      "neighbourhoods": ["el-ghazela", "raoued", "ennasr", "ariana-essoughra", "ariana-ville", "jaafar", "ennkhilette", "jardins-el-menzah"]
+    },
+    {
+      "id": "ihec",
+      "name": "Institut des Hautes Études Commerciales de Carthage",
+      "short": "IHEC",
+      "campus": "Carthage Présidence",
+      "neighbourhoods": ["carthage", "le-kram", "sidi-bou-said", "la-marsa", "la-goulette", "laouina", "ain-zaghouan"]
+    },
+    {
+      "id": "isg",
+      "name": "Institut Supérieur de Gestion de Tunis",
+      "short": "ISG",
+      "campus": "Le Bardo",
+      "neighbourhoods": ["le-bardo", "ksar-said", "denden", "bab-saadoun", "ras-tabia"]
+    },
+    {
+      "id": "essect",
+      "name": "École Supérieure des Sciences Économiques et Commerciales de Tunis",
+      "short": "ESSECT",
+      "campus": "Montfleury",
+      "neighbourhoods": ["montfleury", "medina", "centre-ville", "el-ouardia", "bab-saadoun"]
+    },
+    {
+      "id": "ensit",
+      "name": "École Nationale Supérieure d'Ingénieurs de Tunis",
+      "short": "ENSIT",
+      "campus": "Montfleury",
+      "neighbourhoods": ["montfleury", "medina", "centre-ville", "el-ouardia", "bab-saadoun"]
+    },
+    {
+      "id": "fshst",
+      "name": "Faculté des Sciences Humaines et Sociales de Tunis",
+      "short": "FSHST",
+      "campus": "Boulevard du 9 Avril",
+      "neighbourhoods": ["medina", "bab-saadoun", "montfleury", "centre-ville", "le-bardo"]
+    },
+    {
+      "id": "ensi",
+      "name": "École Nationale des Sciences de l'Informatique",
+      "short": "ENSI",
+      "campus": "Campus de la Manouba",
+      "neighbourhoods": ["manouba", "denden", "oued-ellil", "ksar-said", "le-bardo"]
+    },
+    {
+      "id": "flahm",
+      "name": "Faculté des Lettres, des Arts et des Humanités de la Manouba",
+      "short": "FLAHM",
+      "campus": "Campus de la Manouba",
+      "neighbourhoods": ["manouba", "denden", "oued-ellil", "ksar-said", "le-bardo"]
+    },
+    {
+      "id": "iscae",
+      "name": "Institut Supérieur de Comptabilité et d'Administration des Entreprises",
+      "short": "ISCAE",
+      "campus": "Campus de la Manouba",
+      "neighbourhoods": ["manouba", "denden", "oued-ellil", "ksar-said", "le-bardo"]
+    },
+    {
+      "id": "esct",
+      "name": "École Supérieure de Commerce de Tunis",
+      "short": "ESCT",
+      "campus": "Campus de la Manouba",
+      "neighbourhoods": ["manouba", "denden", "oued-ellil", "ksar-said", "le-bardo"]
+    },
+    {
+      "id": "inat",
+      "name": "Institut National Agronomique de Tunisie",
+      "short": "INAT",
+      "campus": "Cité Mahrajène",
+      "neighbourhoods": ["mutuelleville", "el-menzah-1-4", "belvedere", "cite-el-khadra", "lafayette"]
+    },
+    {
+      "id": "iset-rades",
+      "name": "Institut Supérieur des Études Technologiques de Radès",
+      "short": "ISET Radès",
+      "campus": "Radès",
+      "neighbourhoods": ["rades", "ezzahra", "megrine", "ben-arous", "hammam-lif"]
+    }
+  ]
+}
