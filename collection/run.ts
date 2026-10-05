@@ -6,10 +6,9 @@ import { readFileSync } from "node:fs";
 import { LOCAL_DATABASE, openSqlite } from "../db/db";
 import { runCollection } from "./collect";
 import { facebookGroups } from "./data";
-import type { Extractor, RawPost, Source } from "./domain";
+import type { RawPost, Source } from "./domain";
 import { withFallback } from "./extract/extractor";
-import { GEMINI_MODELS, geminiExtractor } from "./extract/gemini";
-import { groqExtractor } from "./extract/groq";
+import { configuredExtractors } from "./extract/models";
 import { facebookSource } from "./sources/facebook-apify";
 import { createStore } from "./store";
 
@@ -50,11 +49,8 @@ const sources = replay
   ? replaySources(replay)
   : facebookGroups.map((group) => facebookSource(env("APIFY_API_KEY"), group, maxPosts));
 
-const extractors: Extractor[] = GEMINI_MODELS.map((model) => geminiExtractor(env("GEMINI_API_KEY"), model));
-if (process.env.GROQ_API_KEY) extractors.push(groqExtractor(process.env.GROQ_API_KEY));
-
 const db = openSqlite(LOCAL_DATABASE);
-const report = await runCollection({ sources, extractor: withFallback(extractors), store: await createStore(db) });
+const report = await runCollection({ sources, extractor: withFallback(configuredExtractors()), store: await createStore(db) });
 
 console.table(report);
 const total = await db.all<{ n: number }>("SELECT COUNT(*) AS n FROM listings");

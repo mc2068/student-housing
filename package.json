@@ -9,7 +9,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "collect": "tsx --env-file=.env.local collection/run.ts",
-    "sql": "tsx db/sql.ts"
+    "sql": "tsx db/sql.ts",
+    "evaluate": "tsx --env-file=.env.local collection/extract/evaluate.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
