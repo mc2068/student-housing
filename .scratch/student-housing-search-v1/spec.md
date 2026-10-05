@@ -135,7 +135,8 @@ Listings are collected once a day from Tayara, Mubawab and a short list of publi
 
 **Accounts and secrets**
 
-- The site owner creates the Apify, Google AI Studio, Groq and GitHub accounts and supplies the keys. Keys live only in local environment files and in the schedule's secret store, never in the repository.
+- The site owner creates the Apify, Google AI Studio, Groq, GitHub and Cloudflare accounts and supplies the keys. Keys live only in local environment files and in the schedule's secret store, never in the repository.
+- The website's build copies its local environment file into the site it sends to Cloudflare. That file therefore holds only the address that receives reports; the collection keys are in a separate file, and the deploy command refuses a site that carries anything else.
 
 ## Testing Decisions
 
@@ -174,7 +175,7 @@ Prior art: the collection seam tests, the phone-masking tests, and the adapter a
 
 ## Further Notes
 
-- Open before launch: the terms of use of Tayara and Mubawab have not been read (only their robots.txt, which allows listing pages); Cloudflare's free quotas have not been re-verified; Gemini's free-tier limits are per project and should be confirmed in the AI Studio console; whether storing an excerpt and a link requires a declaration to the INPDP under law 2004-63 is a legal question for the site owner.
+- Open before launch: the terms of use of Tayara and Mubawab have not been read (only their robots.txt, which allows listing pages); Cloudflare's free quotas were confirmed against expected use on 2026-10-05 (ticket 09), except the 10 ms of processor time per page, which can only be measured on the live site; Gemini's free-tier limits are per project and should be confirmed in the AI Studio console; whether storing an excerpt and a link requires a declaration to the INPDP under law 2004-63 is a legal question for the site owner.
 - The Facebook scraper's input and output format was read from its public page, not from a real run. The pipeline proof is the first real call.
 - Two details were not discussed in the design session and are assumptions of this spec: hiding a listing is a manual database entry with no admin interface, and a listing that does not state its size or furnishing still appears under a size or furnished filter, labelled as not stated. Results page size is left to the builder.
 - Traffic is expected to be seasonal, heaviest from August to October.
