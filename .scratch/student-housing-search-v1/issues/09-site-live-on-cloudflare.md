@@ -6,15 +6,15 @@ The site owner creates the GitHub repository and connects the Cloudflare account
 
 **Blocked by:** 04
 
-**Status:** ready-for-human (everything that needs no account is built and proven on this machine; the five unticked criteria wait on the owner's steps in `docs/deploy.md`)
+**Status:** ready-for-human (the site is live since 2026-10-06; the one unticked criterion is the owner's check on a real phone, and the processor-time meter is to be read after some real traffic)
 
-- [ ] The hosted database has the same schema as the local one, created by a repeatable step — *the step is written and proven on a local copy; waits on owner steps 2 to 5*
-- [ ] The site is deployed and reachable at a public address — *waits on owner step 7*
-- [ ] A search on the live site returns listings from the hosted database — *waits on owner steps 6 and 7*
-- [ ] Deploying again is one documented command or one push — *`npm run deploy` is written and documented, and was run here up to the point where it sends; it has never sent, so this waits on owner step 7*
+- [x] The hosted database has the same schema as the local one, created by a repeatable step
+- [x] The site is deployed and reachable at a public address
+- [x] A search on the live site returns listings from the hosted database
+- [x] Deploying again is one documented command or one push
 - [x] No key or credential is in the repository
 - [x] Cloudflare's free quotas for the site and database are confirmed against expected use, and the figures recorded in this ticket's comments
-- [ ] The live site is checked by hand on a phone — *waits on owner step 8*
+- [ ] The live site is checked by hand on a phone — *checked in a phone-sized viewport on 2026-10-06; the check on a real phone is the owner's (step 8 of `docs/deploy.md`)*
 
 ## Comments
 
@@ -122,3 +122,12 @@ The review covered tickets 02, 09 and 10 together. Nothing the owner types has c
 - `npm run hosted:fill`: owner step 6. Without it the live site is empty until the first daily run.
 - `public/_headers`: tells browsers to keep the site's stylesheet and scripts, whose names change with their content, so a phone does not fetch them again at every visit.
 - `.env.collect`: what keeps the collection keys out of the site sent to Cloudflare.
+
+### 2026-10-06 — the site is live
+
+- The site is at <https://logement-etudiant.mohamed-chakroun.workers.dev>. The owner logged this machine in to Cloudflare and agreed to the deploy after seeing what would go public.
+- The hosted database `student-housing` was created in western Europe, its tables made with `npm run hosted:schema` and filled with `npm run hosted:fill`: 79 listings, 168 posts already read, no hidden listing. Its identifier is in `wrangler.jsonc`.
+- `npm run deploy` built, passed its check (the report address and no key) and sent the site in one go.
+- Checked on the live address: FST, ISI, ENIT and INSAT return 15, 18, 15 and 8 listings, the counts of the local database; flatshares up to 400 DT open to girls around FST return 6, as in ticket 05. Each answer came back in under a second with status 200. In a 375×812 viewport the FST page shows its 15 cards with no sideways scroll, each with its Facebook link and a "Signaler cette annonce" link addressed to the owner. No key appears in the page.
+- **Not yet known: processor time.** Six searches were answered without an error, which does not show how close a search runs to the free limit of 10 ms. The owner reads the meter after some real traffic (step 9 of `docs/deploy.md`).
+- The listings shown are the copy of the local database (posts of 2026-09-30 to 2026-10-04). They start to expire on 2026-10-14 unless the daily collection (ticket 10) is running by then.
