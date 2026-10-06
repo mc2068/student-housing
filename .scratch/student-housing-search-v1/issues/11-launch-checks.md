@@ -31,3 +31,7 @@
 
 - The free limits for Workers and D1 were read from Cloudflare's own pages on 2026-10-05 and compared with expected use; the figures and page addresses are in ticket 09's comments. All fit, with one open point: the 10 ms of processor time per request can only be measured on the live site (step 9 of `docs/deploy.md`).
 - The box above stays unticked until that figure has been read on the live site.
+
+### 2026-10-06 — Tayara and Mubawab left out of v1
+
+- The site owner decided to leave both classified sites out of v1 (tickets 07 and 08 are closed as `wontfix`). The public Facebook groups are the only source, so the conflict their terms raised no longer applies to what the site does.

@@ -10,7 +10,7 @@ A student starting or continuing studies in Tunisia has to find housing by hand.
 
 A free French-language website, built for phones first, where a student picks their faculty and a few criteria and sees every matching listing from the last 14 days, newest first. Each listing shows the extracted facts (rental or flatshare, price and its price basis, neighbourhood, size, furnished, gender restriction, age, source) and links to the original post, where the student sees photos and contacts the author. The site never hosts contact itself.
 
-Listings are collected once a day from Tayara, Mubawab and a short list of public Facebook groups for Grand Tunis, and turned into structured facts automatically.
+Listings are collected once a day from a short list of public Facebook groups for Grand Tunis, and turned into structured facts automatically.
 
 ## User Stories
 
@@ -43,7 +43,7 @@ Listings are collected once a day from Tayara, Mubawab and a short list of publi
 27. As a student on a phone, I want the search form and results to work well on a small screen, so that I can search from anywhere.
 28. As a student, I want a clear message when no listing matches, so that I know to loosen my criteria.
 29. As a student, I want to report a listing that looks like a scam, so that it can be removed for others.
-30. As a student, I want Facebook group offers and classified site offers in the same results, so that I search once.
+30. As a student, I want the offers of every collected Facebook group in the same results, so that I search once.
 31. As a post author, I want my name and profile left off the site, so that my identity is not republished.
 32. As a post author, I want my phone number left off the site, so that it is only visible where I chose to post it.
 33. As a post author, I want my photos not copied to the site, so that my images stay where I published them.
@@ -82,10 +82,9 @@ Listings are collected once a day from Tayara, Mubawab and a short list of publi
 
 **Sources**
 
-- V1 sources: Tayara, Mubawab, and 5–8 hand-picked public Facebook groups for Grand Tunis.
+- V1 sources: five hand-picked public Facebook groups for Grand Tunis. Tayara and Mubawab were planned as sources and left out of v1 by the site owner on 2026-10-06, after their terms of use were read (tickets 07 and 08; see Out of Scope).
 - Every source is an adapter with the same interface: it returns raw posts, each with a source identifier, the post's link, its text, and its post date. An adapter never returns author identity or images (ADR 0002).
 - Facebook is collected logged-out, from public groups only, through Apify's own Facebook Groups Scraper inside the free $5 monthly credit (ADR 0001). Measured in the pipeline proof: $0.005 per post, so the credit covers about 1,000 posts a month, while the largest group alone sees about 170 posts a day. Each run takes the newest posts up to a limit; posts already collected are recognised by their link. The scraper's date filter is not used, as it adds $0.002 per post. The daily limit is worked out from the credit and the number of groups: 60 posts a month are kept for runs by hand, and the other 940 over a 31-day month give 30 posts a day, 6 from each of five groups.
-- Tayara and Mubawab are collected by small adapters of our own that read the sites' rental listings for Grand Tunis. Their listings are already structured, so price, size and kind come from the page; only the location needs mapping to a neighbourhood.
 - One source failing does not stop the others. A run in which a source could not be collected, or posts could not be read by any model, does everything else and then ends as failed, naming the source, so that the owner sees it.
 
 **Extraction**
@@ -130,7 +129,7 @@ Listings are collected once a day from Tayara, Mubawab and a short list of publi
 **Build order**
 
 1. Pipeline proof: collect a few hundred real posts from 2–3 groups, extract them, and review the results in a table with the site owner. Measure the share of real offers, extraction accuracy, and the scraping credit used per 1,000 posts. If the free credit or the scraper output is not good enough, stop and revisit ADR 0001 before building further.
-2. Storage, the Tayara and Mubawab adapters, and the daily schedule.
+2. Storage and the daily schedule.
 3. The website.
 4. Launch checks (see Further Notes).
 
@@ -161,7 +160,7 @@ Prior art: the collection seam tests, the phone-masking tests, and the adapter a
 ## Out of Scope
 
 - Private Facebook groups, Facebook Marketplace, and any collection that needs a Facebook account.
-- Tunisie Annonce and other classified sites.
+- Tayara, Mubawab, Tunisie Annonce and other classified sites. Tayara's terms limit the use of what the site shows to normal use of the site, and Mubawab's forbid automated collection and reuse without prior permission (tickets 07 and 08). Adding either starts with its written permission.
 - Cities other than Grand Tunis, and private institutions.
 - Demand posts and any matching of students with each other.
 - Direct posting of listings on the site.
@@ -176,7 +175,7 @@ Prior art: the collection seam tests, the phone-masking tests, and the adapter a
 
 ## Further Notes
 
-- Open before launch: Tayara's terms of use were read on 2026-10-05: its robots.txt allows everything and the terms do not mention automated collection, but one general clause limits the use of the site's texts and information to normal use of the site, so ticket 07 is stopped until the site owner decides (ask Tayara, go ahead and record why, or leave Tayara out); Mubawab's terms of use were read on 2026-10-05: its robots.txt allows rental search pages and listing pages (but bars any address containing a colon), while the terms forbid reading the site with software of one's own, extracting from its database and reusing its content elsewhere, a link included, without the company's prior permission, so ticket 08 is stopped until the site owner decides (ask Mubawab, go ahead and record why, or leave Mubawab out); with both classified sites stopped, the public Facebook groups are the only source for now; Cloudflare's free quotas were confirmed against expected use on 2026-10-05 (ticket 09), except the 10 ms of processor time per page, which can only be measured on the live site; Gemini's free-tier limits are per project and should be confirmed in the AI Studio console, and a refusal for overload may count against the daily limit like an answer (seen once on 2026-10-05, not confirmed); the daily collection (ticket 10) has never run on GitHub or written to the real hosted database, so the owner's first run by hand is its first real test; whether storing an excerpt and a link requires a declaration to the INPDP under law 2004-63 is a legal question for the site owner.
+- Open before launch: Tayara's and Mubawab's terms of use were read on 2026-10-05 (tickets 07 and 08), and the site owner left both sites out of v1 on 2026-10-06, so the public Facebook groups are the only source; Cloudflare's free quotas were confirmed against expected use on 2026-10-05 (ticket 09), except the 10 ms of processor time per page, which can only be measured on the live site; Gemini's free-tier limits are per project and should be confirmed in the AI Studio console, and a refusal for overload may count against the daily limit like an answer (seen once on 2026-10-05, not confirmed); the daily collection (ticket 10) has never run on GitHub or written to the real hosted database, so the owner's first run by hand is its first real test; whether storing an excerpt and a link requires a declaration to the INPDP under law 2004-63 is a legal question for the site owner.
 - The Facebook scraper's input and output format was read from its public page, not from a real run. The pipeline proof is the first real call.
 - Two details were not discussed in the design session and are assumptions of this spec: hiding a listing is a manual database entry with no admin interface, and a listing that does not state its size or furnishing still appears under a size or furnished filter, labelled as not stated. Results page size is left to the builder.
 - Traffic is expected to be seasonal, heaviest from August to October.

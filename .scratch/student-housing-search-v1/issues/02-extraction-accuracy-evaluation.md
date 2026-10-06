@@ -4,11 +4,11 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-human (built and run; one criterion waits for the site owner, see the comment of 2026-10-05)
+**Status:** done
 
 - [x] The evaluation set holds about 50 real posts covering offers, demands and unrelated posts, in French, Arabic and Tunisian Arabic in Latin letters
 - [x] Posts in the set have phone numbers masked and carry no author identity
-- [ ] The expected facts are drafted for the owner and confirmed or corrected by the owner
+- [x] The expected facts are drafted for the owner and confirmed or corrected by the owner
 - [x] One command reports accuracy per field and the demand-rejection rate
 - [x] The command names each post where extraction and expectation differ, so the prompt can be improved
 - [x] The first scores are recorded in this ticket's comments
@@ -101,3 +101,7 @@ The review covered tickets 02, 09 and 10 together. The scores do not change: the
 
 - 20 tests of the reading, the scoring, the text and the page pass, on made-up posts.
 - `--keep-answers` on a copy of the set and its 50 saved answers, with no key in the environment so that no model could be called: the same scores as the first run, line for line apart from "Read by"; the review page identical.
+
+### 2026-10-06 — expected facts confirmed by the owner
+
+The site owner looked at the review page and confirmed the expected facts as drafted, including the doubtful cases listed above (lets by the night as not housing, the lower of two prices, "for students only" as no gender restriction). The set is marked as reviewed and was scored again from the saved answers, with no model call: the scores are the first ones, unchanged (47/50 on offer, demand or not housing; 12/12 demands rejected; neighbourhood 26/26, kind 25/25, price 24/25, size 24/25, furnished 23/25, gender restriction 25/25).

@@ -6,7 +6,7 @@ Tayara's terms of use are read as part of ticket 11. If they forbid this collect
 
 **Blocked by:** 03
 
-**Status:** ready-for-human — stopped on 2026-10-05 before any code: waiting for the owner's decision on Tayara's terms of use (see Comments)
+**Status:** wontfix — left out of v1 by the site owner on 2026-10-06, after Tayara's terms of use were read (see Comments)
 
 - [ ] A collection run includes Tayara listings for Grand Tunis through the same source interface as Facebook
 - [ ] Each stored listing carries the link to its Tayara page, its post date, and the facts read from the page
@@ -38,3 +38,7 @@ Tayara's terms of use are read as part of ticket 11. If they forbid this collect
 
 - The status says `ready-for-human`: the ticket waits for the owner's decision, not for an agent. The reason is unchanged.
 - "A short excerpt of the ad" in the comment above now says "of the post": the glossary keeps "ad" out (`CONTEXT.md`).
+
+### 2026-10-06 — owner's decision: left out of v1
+
+The site owner decided to leave Tayara out of v1. Nothing was built and no listing page of the site was ever fetched. The spec now names the public Facebook groups as the only v1 source and lists Tayara under Out of Scope. Adding it later starts with the site's written permission; the reading of its terms above, and the structured-source seam this ticket describes, are where that work would begin.
