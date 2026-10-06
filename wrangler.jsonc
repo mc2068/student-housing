@@ -15,8 +15,7 @@
       // The hosted database, as the website sees it (app/database.ts).
       "binding": "DB",
       "database_name": "student-housing",
-      // Replace with the identifier "npx wrangler d1 create student-housing" prints.
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_id": "dec5bbf7-6f7c-4642-9aac-f9d6b5133bfd"
     }
   ]
 }
