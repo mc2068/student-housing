@@ -1,0 +1,21 @@
+// The website on Cloudflare Workers (docs/deploy.md). Nothing here is a secret.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The site's public address starts with this name.
+  "name": "logement-etudiant",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      // The hosted database, as the website sees it (app/database.ts).
+      "binding": "DB",
+      "database_name": "student-housing",
+      "database_id": "dec5bbf7-6f7c-4642-9aac-f9d6b5133bfd"
+    }
+  ]
+}

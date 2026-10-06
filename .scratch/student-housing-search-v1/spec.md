@@ -10,7 +10,7 @@ A student starting or continuing studies in Tunisia has to find housing by hand.
 
 A free French-language website, built for phones first, where a student picks their faculty and a few criteria and sees every matching listing from the last 14 days, newest first. Each listing shows the extracted facts (rental or flatshare, price and its price basis, neighbourhood, size, furnished, gender restriction, age, source) and links to the original post, where the student sees photos and contacts the author. The site never hosts contact itself.
 
-Listings are collected once a day from Tayara, Mubawab and a short list of public Facebook groups for Grand Tunis, and turned into structured facts automatically.
+Listings are collected once a day from a short list of public Facebook groups for Grand Tunis, and turned into structured facts automatically.
 
 ## User Stories
 
@@ -43,7 +43,7 @@ Listings are collected once a day from Tayara, Mubawab and a short list of publi
 27. As a student on a phone, I want the search form and results to work well on a small screen, so that I can search from anywhere.
 28. As a student, I want a clear message when no listing matches, so that I know to loosen my criteria.
 29. As a student, I want to report a listing that looks like a scam, so that it can be removed for others.
-30. As a student, I want Facebook group offers and classified site offers in the same results, so that I search once.
+30. As a student, I want the offers of every collected Facebook group in the same results, so that I search once.
 31. As a post author, I want my name and profile left off the site, so that my identity is not republished.
 32. As a post author, I want my phone number left off the site, so that it is only visible where I chose to post it.
 33. As a post author, I want my photos not copied to the site, so that my images stay where I published them.
@@ -77,23 +77,23 @@ Listings are collected once a day from Tayara, Mubawab and a short list of publi
 
 - A pure aggregator. No accounts, no direct posting, no photos, no messaging. Contact happens on the source.
 - Two parts: a daily collection job and a website. They share one database and one definition of a listing.
-- TypeScript throughout. The website is a Next.js application on Cloudflare Workers; the database is Cloudflare D1; the collection job runs on a daily GitHub Actions schedule.
+- TypeScript throughout. The website is a Next.js application on Cloudflare Workers; the database is Cloudflare D1; the collection job runs on a daily GitHub Actions schedule and writes to the database over D1's HTTP API (ADR 0003).
 - Running cost is zero. Every service must fit its free tier.
 
 **Sources**
 
-- V1 sources: Tayara, Mubawab, and 5–8 hand-picked public Facebook groups for Grand Tunis.
+- V1 sources: five hand-picked public Facebook groups for Grand Tunis. Tayara and Mubawab were planned as sources and left out of v1 by the site owner on 2026-10-06, after their terms of use were read (tickets 07 and 08; see Out of Scope).
 - Every source is an adapter with the same interface: it returns raw posts, each with a source identifier, the post's link, its text, and its post date. An adapter never returns author identity or images (ADR 0002).
-- Facebook is collected logged-out, from public groups only, through Apify's own Facebook Groups Scraper inside the free $5 monthly credit (ADR 0001). Measured in the pipeline proof: $0.005 per post, so the credit covers about 1,000 posts a month, while the largest group alone sees about 170 posts a day. Each run takes the newest posts up to a limit; posts already collected are recognised by their link. The scraper's date filter is not used, as it adds $0.002 per post.
-- Tayara and Mubawab are collected by small adapters of our own that read the sites' rental listings for Grand Tunis. Their listings are already structured, so price, size and kind come from the page; only the location needs mapping to a neighbourhood.
-- One source failing does not stop the others.
+- Facebook is collected logged-out, from public groups only, through Apify's own Facebook Groups Scraper inside the free $5 monthly credit (ADR 0001). Measured in the pipeline proof: $0.005 per post, so the credit covers about 1,000 posts a month, while the largest group alone sees about 170 posts a day. Each run takes the newest posts up to a limit; posts already collected are recognised by their link. The scraper's date filter is not used, as it adds $0.002 per post. The daily limit is worked out from the credit and the number of groups: 60 posts a month are kept for runs by hand, and the other 940 over a 31-day month give 30 posts a day, 6 from each of five groups.
+- One source failing does not stop the others. A run in which a source could not be collected, or posts could not be read by any model, does everything else and then ends as failed, naming the source, so that the owner sees it.
 
 **Extraction**
 
 - An extractor takes a batch of post texts and returns, for each, either the listing facts or a rejection with a reason: demand, not housing, no neighbourhood, or unreadable.
 - Listing facts: kind (rental or flatshare), monthly price in dinars or none, neighbourhood, size (the n in S+n, studio is 0) or none, furnished (yes, no or not stated), gender restriction (girls, boys or unspecified).
 - The price basis follows the kind: per person for a flatshare, whole unit for a rental.
-- The extractor is a free-tier language model: a chain of Gemini Flash models tried in order, with Groq Llama as an optional last fallback. All sit behind the same interface. Measured in the pipeline proof: the larger Flash models allow 20 free requests a day each, so ten posts go in one request, finished extractions are never sent again, and a spent quota moves the batch to the next model.
+- The extractor is a free-tier language model: the three larger Gemini Flash models tried in order. All sit behind the same interface. Measured in the pipeline proof: the larger Flash models allow 20 free requests a day each, so ten posts go in one request, finished extractions are never sent again, and a spent quota moves the batch to the next model. A daily run reads at most 30 posts, so 3 requests.
+- The free models are at times all overloaded together for minutes. A batch that none of the three could read is tried once more five minutes later, and only if they fail again is it handed to the last-resort models: the two Gemini Flash lite models, then Groq Llama when a key is set. In the first evaluation a lite model differed from the expected facts on 6 posts of 10 and the larger ones on 1 of 40, and a post read wrongly is never read again, so the lite models read a batch only when the alternative is to lose posts already paid for. A collection run counts the posts they read. A post that a model left out of its answer, or garbled in it, while it read the rest of the batch gets the same second try, without the wait; a post still unread after it makes the run end as failed, like a whole batch would.
 - The model chooses the neighbourhood from the curated list only. An answer naming an unknown neighbourhood is treated as no neighbourhood, and the post is dropped.
 - Phone numbers are stripped from post text before it is sent to a model and before an excerpt is stored. Masking covers Latin and Arabic digits, any common separator, and Tunisian and international prefixes. A price written next to a number is kept; when the two cannot be told apart, both are masked.
 - An extracted price outside 30 to 20,000 dinars, or a size above S+10, is treated as not stated. A model entry that does not say whether the post is an offer is treated as unread and tried again.
@@ -129,13 +129,14 @@ Listings are collected once a day from Tayara, Mubawab and a short list of publi
 **Build order**
 
 1. Pipeline proof: collect a few hundred real posts from 2–3 groups, extract them, and review the results in a table with the site owner. Measure the share of real offers, extraction accuracy, and the scraping credit used per 1,000 posts. If the free credit or the scraper output is not good enough, stop and revisit ADR 0001 before building further.
-2. Storage, the Tayara and Mubawab adapters, and the daily schedule.
+2. Storage and the daily schedule.
 3. The website.
 4. Launch checks (see Further Notes).
 
 **Accounts and secrets**
 
-- The site owner creates the Apify, Google AI Studio, Groq and GitHub accounts and supplies the keys. Keys live only in local environment files and in the schedule's secret store, never in the repository.
+- The site owner creates the Apify, Google AI Studio, Groq, GitHub and Cloudflare accounts and supplies the keys. Keys live only in local environment files and in the schedule's secret store, never in the repository. The schedule holds four: the scraper's, the model's, and a Cloudflare token limited to editing D1 with the account's identifier.
+- The website's build copies its local environment file into the site it sends to Cloudflare. That file therefore holds only the address that receives reports; the collection keys are in a separate file, and the deploy command refuses a site that carries anything else.
 
 ## Testing Decisions
 
@@ -150,16 +151,16 @@ Each real adapter and each real model client is checked once against a saved sam
 
 The curated data files are checked for integrity: unique identifiers, and every faculty mapped only to neighbourhoods that exist.
 
-Extraction accuracy is not a unit test, since a model's answers vary. It is a manual evaluation: about 50 real posts with hand-written expected facts, scored per field, run during the pipeline proof and again whenever the prompt or model changes.
+Extraction accuracy is not a unit test, since a model's answers vary. It is a manual evaluation: an evaluation set of 50 real posts from the pipeline proof with hand-written expected facts, scored per field by one command, run whenever the prompt or model changes. The command tries the same models as a collection run, the last-resort ones after the others, names the model that read each post, and is not part of the test run. The set holds post texts, so it stays in a local, uncommitted file (ADR 0002); only the scoring is tested, on made-up posts.
 
 The website's pages are checked by hand on a phone-sized viewport: search for one faculty and follow a listing's link to its source.
 
-Prior art: the collection seam tests, the phone-masking tests, and the adapter and model-client tests that read saved samples. The Facebook sample has the structure of real scraper output with every value made up; the Gemini sample is a real answer for two made-up posts. No Groq key was available, so the Groq client is tested against the documented answer shape only.
+Prior art: the collection seam tests, the phone-masking tests, and the adapter and model-client tests that read saved samples. The Facebook sample has the structure of real scraper output with every value made up; the Gemini sample is a real answer for two made-up posts. No Groq key was available, so the Groq client is tested against the documented answer shape only. No Cloudflare account was available either: the client for D1's HTTP API is tested against the answer shape Cloudflare documents, and by running the collection store and the search through it with a local D1 answering in Cloudflare's place.
 
 ## Out of Scope
 
 - Private Facebook groups, Facebook Marketplace, and any collection that needs a Facebook account.
-- Tunisie Annonce and other classified sites.
+- Tayara, Mubawab, Tunisie Annonce and other classified sites. Tayara's terms limit the use of what the site shows to normal use of the site, and Mubawab's forbid automated collection and reuse without prior permission (tickets 07 and 08). Adding either starts with its written permission.
 - Cities other than Grand Tunis, and private institutions.
 - Demand posts and any matching of students with each other.
 - Direct posting of listings on the site.
@@ -174,7 +175,7 @@ Prior art: the collection seam tests, the phone-masking tests, and the adapter a
 
 ## Further Notes
 
-- Open before launch: the terms of use of Tayara and Mubawab have not been read (only their robots.txt, which allows listing pages); Cloudflare's free quotas have not been re-verified; Gemini's free-tier limits are per project and should be confirmed in the AI Studio console; whether storing an excerpt and a link requires a declaration to the INPDP under law 2004-63 is a legal question for the site owner.
+- Open before launch: Tayara's and Mubawab's terms of use were read on 2026-10-05 (tickets 07 and 08), and the site owner left both sites out of v1 on 2026-10-06, so the public Facebook groups are the only source; Cloudflare's free quotas were confirmed against expected use on 2026-10-05 (ticket 09), except the 10 ms of processor time per page, which can only be measured on the live site; Gemini's free-tier limits are per project and should be confirmed in the AI Studio console, and a refusal for overload may count against the daily limit like an answer (seen once on 2026-10-05, not confirmed); the daily collection (ticket 10) has never run on GitHub or written to the real hosted database, so the owner's first run by hand is its first real test; whether storing an excerpt and a link requires a declaration to the INPDP under law 2004-63 is a legal question for the site owner.
 - The Facebook scraper's input and output format was read from its public page, not from a real run. The pipeline proof is the first real call.
 - Two details were not discussed in the design session and are assumptions of this spec: hiding a listing is a manual database entry with no admin interface, and a listing that does not state its size or furnishing still appears under a size or furnished filter, labelled as not stated. Results page size is left to the builder.
 - Traffic is expected to be seasonal, heaviest from August to October.

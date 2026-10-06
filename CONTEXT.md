@@ -1,6 +1,6 @@
 # Student Housing Search
 
-A website that gathers housing offers for students in Tunisia from classified sites and public Facebook groups, and lets a student filter them around their faculty. Contact always happens on the original post.
+A website that gathers housing offers for students in Tunisia from public Facebook groups, and lets a student filter them around their faculty. Contact always happens on the original post.
 
 ## Language
 
@@ -49,6 +49,10 @@ _Avoid_: Flag, complaint
 One pass over every source that gathers its newest posts and turns the offers among them into listings.
 _Avoid_: Scrape, crawl, sync
 
+**Evaluation set**:
+Real posts kept with the facts a person reading each one expects, used to measure by hand how well posts are turned into facts. Its posts carry no author and no phone number, and it is never committed.
+_Avoid_: Test set, benchmark, golden set
+
 ### Search
 
 **Filter** (*filtre*):
@@ -62,7 +66,7 @@ _Avoid_: Max price, price limit
 ### Places
 
 **Source**:
-A classified site or public Facebook group that posts are collected from.
+A public Facebook group that posts are collected from. A classified site could be one; none is collected in v1.
 
 **Faculty** (*établissement*; the form asks for "faculté, école ou institut"):
 Any higher-education institution a student searches around, whether a faculté, école or institut.

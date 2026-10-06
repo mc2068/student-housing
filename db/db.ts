@@ -13,6 +13,9 @@ export interface Db {
   all<T>(sql: string, ...params: SqlValue[]): Promise<T[]>;
 }
 
+/** The most values one statement may bind: Cloudflare D1's limit. Local SQLite takes thousands, so only D1 shows a statement over it. */
+export const MAX_BOUND_VALUES = 100;
+
 /** The file a collection run writes and the local website reads. */
 export const LOCAL_DATABASE = "local.db";
 
@@ -36,6 +39,13 @@ export function openSqlite(path: string, { readOnly = false } = {}): Db {
   };
 }
 
+const schema = () => readFileSync(new URL("./schema.sql", import.meta.url), "utf8");
+
 export async function applySchema(db: Db): Promise<void> {
-  await db.exec(readFileSync(new URL("./schema.sql", import.meta.url), "utf8"));
+  await db.exec(schema());
+}
+
+/** The names of the tables db/schema.sql creates, in its order. */
+export function schemaTables(): string[] {
+  return [...schema().matchAll(/^CREATE TABLE IF NOT EXISTS (\w+)/gm)].map((match) => match[1]!);
 }

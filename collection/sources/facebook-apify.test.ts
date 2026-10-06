@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
-import { toRawPost } from "./facebook-apify";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { facebookSource, toRawPost } from "./facebook-apify";
 
 // The structure of three real items from the scraper (a plain post, a share, an image-only post),
 // with every value replaced by a made-up one.
@@ -35,5 +35,35 @@ describe("toRawPost on the scraper's real output", () => {
   it("skips a post without a link or with an unreadable date", () => {
     expect(toRawPost({ text: "t", time: "2026-10-01T10:00:00.000Z" })).toBeNull();
     expect(toRawPost({ url: "u", text: "t", time: "not a date" })).toBeNull();
+  });
+});
+
+describe("a Facebook group as a source", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const GROUP = { id: "fb-a", url: "https://www.facebook.com/groups/1000000000000001" };
+
+  /** Apify's side, played here: a scraper run is started, asked how it is doing, then asked for its items. */
+  function apify(statusOfRun: (timesAsked: number) => string) {
+    let timesAsked = 0;
+    vi.stubGlobal("fetch", async (url: string) => {
+      if (url.endsWith("/runs")) return Response.json({ data: { id: "run-1", defaultDatasetId: "dataset-1" } });
+      if (url.endsWith("/actor-runs/run-1")) return Response.json({ data: { status: statusOfRun(++timesAsked) } });
+      return Response.json(sample);
+    });
+  }
+
+  it("waits for the scraper run to finish and returns its posts", async () => {
+    apify((timesAsked) => (timesAsked < 3 ? "RUNNING" : "SUCCEEDED"));
+
+    const posts = await facebookSource("token", GROUP, 6, { pollMs: 0 }).collect();
+
+    expect(posts).toEqual([plain, share]);
+  });
+
+  it("gives up on a scraper run that does not finish in time, so that the other sources get their turn", async () => {
+    apify(() => "RUNNING");
+
+    await expect(facebookSource("token", GROUP, 6, { pollMs: 1, runLimitMs: 20 }).collect()).rejects.toThrow(/run-1 was still RUNNING/);
   });
 });
